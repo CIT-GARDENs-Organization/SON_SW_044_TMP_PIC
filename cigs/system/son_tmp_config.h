@@ -30,13 +30,13 @@
     #define PIN_CS_ADC          PIN_B3
 
 // ------------------------------------------
-    // UART 通信設定 (強制ソフトウェア制御)
+    // UART 通信設定
     // ------------------------------------------
     #use rs232(baud=9600, parity=N, xmit=PIN_G0, bits=8, stream=PC, FORCE_SW, ERRORS)
-    #use rs232(baud=9600, parity=N, xmit=PIN_D1, rcv=PIN_D0, bits=8, stream=BOSS, FORCE_SW, ERRORS)
+    #use rs232(baud=9600, parity=N, xmit=PIN_D1, rcv=PIN_D0, bits=8, stream=BOSS, ERRORS)
 
     // ------------------------------------------
-    // SPI 通信設定 (強制ソフトウェア制御)
+    // SPI 通信設定
     // ------------------------------------------
     #use spi(MASTER, BAUD=1000000, MODE=0, BITS=8, DI=PIN_B5, DO=PIN_B4, CLK=PIN_B2, stream=MIS_FM_STREAM, FORCE_SW)
     #use spi(MASTER, BAUD=1000000, MODE=0, BITS=8, DI=PIN_D6, DO=PIN_D7, CLK=PIN_D5, stream=SMF_STREAM, FORCE_SW)

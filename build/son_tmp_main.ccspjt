@@ -14,10 +14,4 @@ Count=1
 1=son_tmp_main (main)
 
 [defines]
-buildcount=1
-
-[ProjectLog]
-Days=1
-D1=03-03-2026
-D1_L=1
-D1_L1=[59087]Project Closed.
+buildcount=5

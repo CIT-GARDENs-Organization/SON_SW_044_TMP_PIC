@@ -1,0 +1,165 @@
+
+ROM used:   3602/131056 (3%)
+            3602/131056 (3%) including unused fragments
+
+            0.7 Average locations per line
+            4.6 Average locations per statement
+
+RAM used:   336/3578 (9%) at main() level
+            341/3578 (10%) worst case
+
+Stack used: 7 worst case (6 in main + 1 for interrupts)
+Stack size: 31
+
+Lines Stmts  %   Files
+----- ----- ---  -----
+   99     8   1  son_tmp_main.c
+   76     0   0  cigs\system\son_tmp_main.h
+   98     0   0  cigs\system\son_tmp_config.h
+ 1487     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Devices\18F67J94.h
+   21     0   0  cigs\hardware\mcu\timer.h
+  195     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Drivers\stdint.h
+   28     0   0  cigs\hardware\mcu\uart.h
+   23     0   0  lib\communication\typedef_content.h
+   15     0   0  lib\communication\value_status.h
+   13     0   0  lib\tool\calc_tools.h
+  105     0   0  lib\tool\smf_queue.h
+  193     0   0  lib\tool\mmj_smf_memorymap.h
+  100     0   0  lib\device\mt25q.h
+   79     0   0  lib\communication\communication.h
+   31     0   0  lib\communication\frame.h
+   17     0   0  lib\communication\communication_driver.h
+   23     0   0  lib\communication\mission_tools.h
+   28     0   0  cigs\core\measurement\son_tmp_strain.h
+   39     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Drivers\stdbool.h
+   41     0   0  cigs\core\measurement\son_tmp_temp.h
+   99     0   0  cigs\core\storage\son_tmp_flash.h
+  435     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Drivers\string.h
+   32     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Drivers\stddef.h
+   28     0   0  ..\..\..\..\..\..\..\Program Files (x86)\PICC\Drivers\ctype.h
+   41     0   0  cigs\core\logging\son_tmp_piclog.h
+   20     0   0  cigs\application\mission\son_tmp_excute_mission.h
+   16     0   0  cigs\application\mission\son_tmp_mode_mission.h
+   21     0   0  cigs\application\mission\son_tmp_mode_flash.h
+   45    16   2  cigs\hardware\mcu\src\timer.c
+   43     8   1  cigs\hardware\mcu\src\uart.c
+  587   290  37  lib\device\mt25q.c
+   60    15   2  lib\tool\calc_tools.c
+   83    41   5  lib\tool\smf_queue.c
+  127    64   8  lib\communication\communication.c
+   17     3   0  lib\communication\communication_driver.c
+   81    47   6  lib\communication\mission_tools.c
+  195    84  11  cigs\core\measurement\son_tmp_strain.c
+   90    29   4  cigs\core\measurement\son_tmp_temp.c
+   60    22   3  cigs\core\logging\son_tmp_piclog.c
+   99    35   4  cigs\core\storage\son_tmp_smf.c
+   21     0   0  cigs\core\storage\son_tmp_smf.h
+  157    71   9  cigs\core\storage\son_tmp_flash.c
+   91    33   4  cigs\application\mission\son_tmp_excute_mission.c
+   48    10   1  cigs\application\mission\son_tmp_mode_mission.c
+   49    11   1  cigs\application\mission\son_tmp_mode_flash.c
+----- -----
+ 5256   787 Total
+
+Page ROM  %  RAM    Vol Diff  Functions:
+---- --- --- ---    --- ----  ----------
+0     48   1    1             @delay_ms1
+0     82   1    1             @PUTCHAR_1_
+0     84   1    1             @PUTCHAR_2_
+0    104   1    1             @GETCH_2_
+0     58   1    0     90  2.8  TIMER1_isr
+0     44   1    0             @const1456
+0     50   1    3     27  1.3  @PSTRINGC_950
+0     12   0    0     13  1.0  @const1461
+0     18   0    0    104  3.0  @const1463
+0     12   0    0             @const1464
+0     26   0    0    253  5.7  @const1545
+0     26   0    0             @const1547
+0     24   0    0    632  4.1  @const1548
+0     32   0    0             @const1552
+0     14   0    0             @const1553
+0    114   2    2             @PRINTF_X_950
+0     28   0    0             @const1565
+0     22   0    0    295  7.4  @const1567
+0     18   0    0             @const1568
+0     36   0    0    356  5.9  @const1570
+0     54   1    4             @PSTRINGCN_950
+0     18   0    0             @const1575
+0     24   0    0    194  3.4  @const1576
+0     24   0    0             @const1577
+0     34   0    0             @const1578
+0     24   0    0    457  5.9  @const1579
+0     24   0    0    351  4.4  @const1580
+0     14   0    0             @const1585
+0     36   0    0             @const1590
+0     56   1    0             @const1593
+0     26   0    0             @const1596
+0     26   0    0             @const1598
+0     28   0    0             @const1599
+0     56   1    0     17  1.3  @const1600
+0     34   0    0     55  0.7  @const1601
+0     16   0    0    186  2.5  @const1602
+0     12   0    0    187  3.6  @const1603
+0     38   1    0             @const1609
+0     32   0    0             @const1619
+0     22   0    0     37  1.3  @const1620
+0     12   0    0   1740  8.9  @const1621
+0     44   1    0   1146  6.5  @const1625
+0     24   0    0             @const1632
+0     14   0    0             @const1635
+0     48   1    0             @const1646
+0     36   0    0             @const1652
+0     34   0    0    133  3.0  @const1656
+0     24   0    0             @const1659
+0     46   1    0             @const1660
+0     28   0    0             @const1661
+0     22   0    0             @const1662
+0     26   0    0             @const1663
+0     20   0    0             @const1664
+0     24   0    0             @const1665
+0     34   0    0             @const1667
+0     46   1    0    490  3.8  @const1668
+0     12   0    0    114  2.4  @const1669
+0     24   0    0             @const1674
+0     36   0    0             @const1675
+0     36   0    0             @const1676
+0     36   0    0    183  2.1  @const1677
+0     24   0    0             @const1678
+0     32   0    0    439  4.5  @const1679
+0     34   0    0             @const1680
+0     28   0    0    116  2.3  @const1683
+0     26   0    0    435  3.4  @const1684
+0     34   0    0             @const1686
+0     24   0    0     70  1.5  @const1691
+0     36   0    0             @const1692
+0     32   0    0             @const1693
+0     32   0    0             @const1694
+0     30   0    0   1278  8.7  @const1695
+0     42   1    0             @const1696
+0    888  12    1    221  3.0  MAIN
+0     48   1    0             @const1700
+0     28   0    0             @const1702
+ Inline         0             @cinit1
+
+Program metrics:
+    Functions               28
+    Statements              787
+    Comments                1492
+    Volume (V)              16852
+    Difficulty (D)          102.0
+    Effort to implement (E) 1719353
+    Time to implement (T)   26 hours, 32 minutes
+    Est Delivered Bugs (B)  5
+    Cyclomatic Complexity   32
+    Maintainability (MI)    36
+
+ Segment     Used  Free
+-----------  ----  ----
+00000-00004     6  0  
+00006-00006     0  2  
+00008-000BC   182  0  
+000BE-0FFFE  3414  61932  
+10000-1FFEE     0  65520  
+
+
+

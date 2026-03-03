@@ -1,0 +1,20 @@
+ÀÄson_tmp_main
+   ÃÄMAIN  0/888  Ram=1
+   ³  ÃÄ@cinit1  (Inline)  Ram=0
+   ³  ÃÄ@cinit2  (Inline)  Ram=0
+   ³  ÃÄ@delay_ms1  0/48  Ram=1
+   ³  ÃÄ@PSTRINGC_950  0/50  Ram=3
+   ³  ³  ÀÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ÃÄ@GETCH_2_  0/104  Ram=1
+   ³  ÃÄ@PUTCHAR_2_  0/84  Ram=1
+   ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ÀÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ÀÄ*
+   ³  ÃÄ@PRINTF_X_950  0/114  Ram=2
+   ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ÀÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ÀÄ@PSTRINGCN_950  0/54  Ram=4
+   ³     ÀÄ*
+   ÀÄTIMER1_isr  0/58  Ram=0
