@@ -1,35 +1,11 @@
-#include "cigs/system/son_tmp_main.h"  // ヘッダーファイルから自動的にインクルードされるため不要
+#include "cigs/system/son_tmp_main.h"
 
-void main()
-{
-    delay_ms(100); // 起動待ち
-    fprintf(PC, "\r\n--- Echo Back Test Mode (Software UART) ---\r\n");
-
-    // 割り込みは一切使わず、無限ループでひたすら受信を待つ
-    while(TRUE)
-    {
-        // BOSS(TeraTerm)からデータが来るかを監視 (kbhit)
-        if (kbhit(BOSS))
-        {
-            // データが来たら読み取る
-            char c = fgetc(BOSS);
-
-            // そのままBOSS(TeraTerm)に打ち返す
-            fputc(c, BOSS);
-
-            // PC側のモニターにも「何を受け取ったか」を表示する
-            fprintf(PC, "Received: %c (HEX: %02X)\r\n", c, c);
-        }
-    }
-}
-
-/*
 void main()
 {
     delay_ms(100); // wait for power stable
     fprintf(PC,"\r\n\r\n\r\n============================================================\r\n");
-    fprintf(PC,"This is SHION TMP PIC.\r\n");
-    fprintf(PC,"Last updated on %s %s.\r\n\r\n", __DATE__, __TIME__);
+    fprintf(PC,"This is MOMIJI CIGS PIC BBM for MIS7_BBM4.\r\n");
+    fprintf(PC,"Last updated on %s %s, by Inoue.\r\n\r\n", __DATE__, __TIME__);
 
     io_init();
     setup_uart_to_boss();
@@ -43,41 +19,31 @@ void main()
 
     fprintf(PC,"waiting for BOSS PIC command");
 
-    //Start loop
+    // Start loop
     while(!is_finished)
     {
-        // handle from boss commands
+        // BOSSからの受信バッファにデータがあるかチェック
         if(boss_receive_buffer_size > 0)
         {
-            // ===== ここからデバッグ出力を追加 =====
-            fprintf(PC, "\r\n[DEBUG] Raw RX Data: ");
-            for(int i = 0; i < boss_receive_buffer_size; i++)
-            {
-                // バイナリデータなので16進数表記(%02X)で出力する
-                fprintf(PC, "%02X ", boss_receive_buffer[i]);
+            // 1. バッファからフレームを解析し、Command構造体を生成
+            Command recieve_cmd = make_receive_command((uint8_t*)boss_receive_buffer, boss_receive_buffer_size);
 
-                // もし本当に「abc」のようなASCII文字列を送っていて、
-                // それを見たい場合は上の行をコメントアウトして下を有効にしてください。
-                // fprintf(PC, "%c", boss_receive_buffer[i]);
-            }
-            fprintf(PC, "\r\n");
-            // ===== ここまで追加 =====
+            // 2. 解析が終わった分（または不要なゴミデータ）をバッファから消去
+            clear_receive_signal((uint8_t*)boss_receive_buffer, &boss_receive_buffer_size);
 
-            volatile Command recieve_cmd = make_receive_command(boss_receive_buffer, boss_receive_buffer_size);
-
-            // ここでバッファがクリア(サイズ0)になる
-            clear_receive_signal(boss_receive_buffer, &boss_receive_buffer_size);
-
+            // 3. 正しいコマンドフレームが抽出できていた場合のみ処理を実行
             if(recieve_cmd.is_exist)
             {
-                // 変更: 古い関数ではなく、新しいディスパッチャにCommand構造体を渡す
-                execute_mission_command((Command*)&recieve_cmd);
+                fprintf(PC, "\r\n[INFO] Valid Command Frame Received! ID: %02X\r\n", recieve_cmd.frame_id);
+
+                // 新しいディスパッチャ（司令塔）へコマンドを渡す
+                execute_mission_command(&recieve_cmd);
 
                 fprintf(PC,"\r\nwaiting for BOSS PIC command");
             }
         }
 
-        // check `is break while loop`
+        // 終了フラグのチェック
         if(is_finished == TRUE)
             break;
 
@@ -85,7 +51,7 @@ void main()
         fprintf(PC, ".");
     }
 
-    fprintf(PC, "\r\n\r\n======\r\n\r\nFinished process.\r\nWait for BOSS PIC turn off me");
+    fprintf(PC, "\r\n\r\n======\r\n\r\nFinished process.\r\nWait for BOSS PIC turn off me\r\n");
 
     while (TRUE)
     {
@@ -95,4 +61,3 @@ void main()
 
     fprintf(PC, "End main\r\n");
 }
-*/
