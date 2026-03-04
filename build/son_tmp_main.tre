@@ -1,5 +1,5 @@
 ÀÄson_tmp_main
-   ÃÄMAIN  0/1296  Ram=14
+   ÃÄMAIN  0/1326  Ram=17
    ³  ÃÄ@cinit1  (Inline)  Ram=0
    ³  ÃÄ@cinit2  (Inline)  Ram=0
    ³  ÃÄ@delay_ms1  0/46  Ram=1
@@ -171,6 +171,8 @@
    ³  ³  ÀÄ*
    ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ÀÄ*
+   ³  ÃÄ@GETCH_2_  0/102  Ram=1
+   ³  ÃÄ@GETCH_2_  0/102  Ram=1
    ³  ÃÄmake_receive_command  0/506  Ram=25
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
@@ -387,8 +389,6 @@
    ³  ³     ÀÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ÀÄ*
-   ³  ÃÄ@delay_ms1  0/46  Ram=1
-   ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ÀÄ*
    ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1

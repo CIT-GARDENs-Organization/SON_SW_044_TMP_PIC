@@ -53,14 +53,18 @@
 15C-15D execute_mission_command.cmd
 15C-15D clear_receive_signal.receive_signal
 15C     MAIN.@SCRATCH1
+15D     MAIN.@SCRATCH2
 15E-15F clear_receive_signal.receive_signal_size
 15E     execute_mission_command.frame_id
+15E     MAIN.@SCRATCH3
 15F     process_boss_command.cmd
 15F     transmit_command.frame_id
+15F     MAIN.@SCRATCH4
 160-19F cigs_smf_copy.buffer
 160-163 cigs_smf_prepare.max_transfer_bytes
 160-161 transmit_command.content
 160     execute_mission_sequence.num_channels
+160     @GETCH_2_.@SCRATCH1
 160     clear_receive_signal.@SCRATCH1
 161     execute_mission_sequence.samplingRate
 161     clear_receive_signal.@SCRATCH2
@@ -301,8 +305,8 @@ F45     CCP_9_HIGH
 F47     CCP_8
 F47     CCP_8_LOW
 F48     CCP_8_HIGH
-F4A     CCP_3
 F4A     CCP_3_LOW
+F4A     CCP_3
 F4B     CCP_3_HIGH
 F4F     CCP_2
 F4F     CCP_2_LOW
@@ -314,12 +318,12 @@ FBB     CCP_1_HIGH
 FC4.0   C1OUT
 FC4.1   C2OUT
 FC4.2   C3OUT
-FE1-FE2 @READ_PACKED_MEMORY.P1
-FE1-FE2 @WRITE_PACKED_MEMORY.P2
+FE1-FE2 @WRITE_PACKED_MEMORY.P1
+FE1-FE2 @READ_PACKED_MEMORY.P2
 FE9-FEA @WRITE_PROGRAM_MEMORY.P1
-FE9-FEA @READ_PACKED_MEMORY.P2
-FE9-FEA @READ_PROGRAM_MEMORY.P3
-FE9-FEA @WRITE_PACKED_MEMORY.P4
+FE9-FEA @WRITE_PACKED_MEMORY.P2
+FE9-FEA @READ_PACKED_MEMORY.P3
+FE9-FEA @READ_PROGRAM_MEMORY.P4
 FE9-FEA @MEMSET.P5
 FF6-FF8 @READ_PROGRAM_MEMORY.P1
 FF6-FF8 @WRITE_PROGRAM_MEMORY.P2
@@ -398,75 +402,76 @@ ROM Allocation:
 0008DC  @const1703.call
 0008E6  @const1705.call
 00090C  @const1706.call
-00092A  @const1708.call
-00095C  @const1709.call
-00097C  @const1711.call
-0009BE  @const1713.call
-0009CA  @delay_ms1
-0009F8  @PUTCHAR_1_
-000A4A  @PSTRINGC_950
-000A7A  @PSTRINGCN_950
-000AB0  temp_io_init
-000AF6  io_init
-000B4E  setup_uart_to_boss
-000B78  setup_timer
-000BBA  @WRITEBITA
-000C0E  @SPI_XFER_1
-000C6E  @SPI_XFER_2
-000CCE  spi_xfer_and_read_select_stream
-000F02  is_connect
-000FCA  @MEMSET
-000FEE  read_data_bytes
-001206  misf_init
-0013B6  get_current_sec
-0013C8  @PRINTF_X_950
-001438  spi_xfer_select_stream
-001528  spi_xfer_two_datas_select_stream
-0016A4  status_register
-001744  write_data_bytes
-001AC8  calc_crc8
-001B34  make_flash_data_table
-001BE4  subsector_4kByte_erase
-001F48  write_misf_address_area
-001FBE  piclog_make
-002162  trim_receive_signal_header
-00220A  get_content_size
-0022C6  check_crc
-0023B0  check_device_id
-00246A  make_receive_command
-002664  clear_receive_signal
-0026A2  @PUTCHAR_2_
-0026F6  transmit
-0027AE  transmit_command
-002844  transmit_ack
-00285A  @DIV88
-0028A2  @PRINTF_U_950
-00294C  switch_channel
-00298C  read_adc_ltc2452
-0029E6  read_adc_internal
-002A06  execute_temp_measurement
-002CBE  execute_measurement
-003002  execute_mission_sequence
-0030CC  @DIV3232
-0031A6  @PRINTF_L32U_950
-0032A8  cigs_smf_prepare
-003464  prepare_smf_transfer
-00348A  cigs_smf_copy
-00366A  execute_smf_transfer
-003690  cigs_smf_permit
-003704  permit_smf_transfer
-00373E  process_boss_command
-003826  execute_mission_command
-003856  @cinit1
-003856  MAIN
-0038C2  @cinit2
+00092C  @const1708.call
+00095E  @const1709.call
+000980  @const1710.call
+0009C2  @const1712.call
+0009CE  @delay_ms1
+0009FC  @PUTCHAR_1_
+000A4E  @PSTRINGC_950
+000A7E  @PSTRINGCN_950
+000AB4  temp_io_init
+000AFA  io_init
+000B52  setup_uart_to_boss
+000B7C  setup_timer
+000BBE  @WRITEBITA
+000C12  @SPI_XFER_1
+000C72  @SPI_XFER_2
+000CD2  spi_xfer_and_read_select_stream
+000F06  is_connect
+000FCE  @MEMSET
+000FF2  read_data_bytes
+00120A  misf_init
+0013BA  get_current_sec
+0013CC  @PRINTF_X_950
+00143C  spi_xfer_select_stream
+00152C  spi_xfer_two_datas_select_stream
+0016A8  status_register
+001748  write_data_bytes
+001ACC  calc_crc8
+001B38  make_flash_data_table
+001BE8  subsector_4kByte_erase
+001F4C  write_misf_address_area
+001FC2  piclog_make
+002166  @GETCH_2_
+0021CC  trim_receive_signal_header
+002274  get_content_size
+002330  check_crc
+00241A  check_device_id
+0024D4  make_receive_command
+0026CE  clear_receive_signal
+00270C  @PUTCHAR_2_
+002760  transmit
+002818  transmit_command
+0028AE  transmit_ack
+0028C4  @DIV88
+00290C  @PRINTF_U_950
+0029B6  switch_channel
+0029F6  read_adc_ltc2452
+002A50  read_adc_internal
+002A70  execute_temp_measurement
+002D28  execute_measurement
+00306C  execute_mission_sequence
+003136  @DIV3232
+003210  @PRINTF_L32U_950
+003312  cigs_smf_prepare
+0034CE  prepare_smf_transfer
+0034F4  cigs_smf_copy
+0036D4  execute_smf_transfer
+0036FA  cigs_smf_permit
+00376E  permit_smf_transfer
+0037A8  process_boss_command
+003890  execute_mission_command
+0038C0  @cinit1
+0038C0  MAIN
+00392C  @cinit2
 0135  NEXT
 
 Project Directory:
     C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\
 
 Project Files:
-    son_tmp_main.c                                          [03-3-26 17:28  CRC=EC32443B]
+    son_tmp_main.c                                          [04-3-26 11:21  CRC=D3C74ECE]
     cigs\system\son_tmp_main.h                              [03-3-26 15:06  CRC=99F52064]
     cigs\system\son_tmp_config.h                            [03-3-26 17:14  CRC=39D371E6]
     ..\..\..\..\..\..\..\Program Files (x86)\PICC\Devices\18F67J94.h [13-5-21 13:54  CRC=CB5C8DE4]
@@ -512,9 +517,9 @@ Project Files:
     cigs\application\mission\son_tmp_mode_mission.c         [03-3-26 15:06  CRC=F3E55B55]
     cigs\application\mission\son_tmp_mode_flash.c           [03-3-26 15:03  CRC=BFC8E189]
 
-Source signature=A97DAF10
+Source signature=9112B9A3
 Program memory checksum=0000
-Hex file CRC=8D33
+Hex file CRC=062C
 
 Units:
     C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\son_tmp_main (main)
