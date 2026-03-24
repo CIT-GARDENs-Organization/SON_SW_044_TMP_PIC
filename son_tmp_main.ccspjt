@@ -9,10 +9,10 @@ enabled=0
 chip=1
 D1=
 V1=
-buildcount=2
+buildcount=9
 
 [fileformats]
-forcecoff=1
+forcecoff=0
 debug=4
 error=2
 object=0
@@ -62,21 +62,32 @@ Fixed=
 [Opened Files]
 1=son_tmp_main.c
 t1=1
-Count=3
+Count=7
 2=cigs\core\measurement\son_tmp_strain.c
 t2=1
 3=cigs\application\mission\son_tmp_mode_flash.c
 t3=1
-4=cigs\application\mission\son_tmp_mode_flash.c
-t4=61
+4=lib\device\mt25q.h
+t4=20
+5=lib\device\mt25q.c
+t5=390
+6=cigs\core\storage\son_tmp_flash.c
+t6=13
+7=cigs\system\son_tmp_config.h
+t7=13
 
 [ProjectLog]
-Days=1
+Days=2
 D1=04-03-2026
 D1_L=3
 D1_L1=[55141]Started Editing.
 D1_L2=[55441]Stopped Editing.
 D1_L3=[59596]Project Closed.
+D2=24-03-2026
+D2_L=3
+D2_L1=[54902]Project Opened.
+D2_L2=[58251]Started Editing.
+D2_L3=[58551]Stopped Editing.
 [build\son_tmp_main.c]
 Type=4
 [Units]

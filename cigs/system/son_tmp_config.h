@@ -42,8 +42,8 @@
     // ------------------------------------------
     // SPI 通信設定
     // ------------------------------------------
-    #use spi(MASTER, BAUD=1000000, MODE=0, BITS=8, DI=PIN_B5, DO=PIN_B4, CLK=PIN_B2, stream=MIS_FM_STREAM, FORCE_SW)
-    #use spi(MASTER, BAUD=1000000, MODE=0, BITS=8, DI=PIN_D6, DO=PIN_D7, CLK=PIN_D5, stream=SMF_STREAM, FORCE_SW)
+    #use spi(MASTER, BAUD=100000, MODE=0, BITS=8, DI=PIN_B5, DO=PIN_B4, CLK=PIN_B2, stream=MIS_FM_STREAM)
+    #use spi(MASTER, BAUD=100000, MODE=0, BITS=8, DI=PIN_D6, DO=PIN_D7, CLK=PIN_D5, stream=SMF_STREAM)
 
 #endif
 

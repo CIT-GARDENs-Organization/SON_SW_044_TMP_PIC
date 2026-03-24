@@ -37,27 +37,27 @@ Flash smf = {SPI_1, MT25QL01GBBB, SMF_CS};
 
 int1 is_connect(Flash flash_stream);
 
-void write_data_bytes(Flash flash_stream, unsigned int32 write_start_address, int8 *write_data, unsigned int16 write_amount);      
+void write_data_bytes(Flash flash_stream, unsigned int32 write_start_address, int8 *write_data, unsigned int16 write_amount);
 
-void read_data_bytes(Flash flash_stream, unsigned int32 read_start_address, int8 *read_data, unsigned int32 read_amount);  
+void read_data_bytes(Flash flash_stream, unsigned int32 read_start_address, int8 *read_data, unsigned int32 read_amount);
 
 void sector_erase(Flash flash_stream, unsigned int32 sector_address);
 
-void subsector_32kByte_erase(Flash flash_stream, unsigned int32 subsector_address);  
-                               
-void subsector_4kByte_erase(Flash flash_stream, unsigned int32 subsector_address);      
+void subsector_32kByte_erase(Flash flash_stream, unsigned int32 subsector_address);
+
+void subsector_4kByte_erase(Flash flash_stream, unsigned int32 subsector_address);
 
 //Private Functions
- 
+
 void flash_setting(Flash flash_stream);
- 
+
 int8 status_register(Flash flash_stream);
- 
+
 int8 read_id(Flash flash_stream);
- 
-int8 read_data_byte(Flash flash_stream, unsigned int32 read_address);                                               
- 
-void write_data_byte(Flash flash_stream, unsigned int32 write_address,int8 write_data);                             
+
+int8 read_data_byte(Flash flash_stream, unsigned int32 read_address);
+
+void write_data_byte(Flash flash_stream, unsigned int32 write_address,int8 write_data);
         //
 
 

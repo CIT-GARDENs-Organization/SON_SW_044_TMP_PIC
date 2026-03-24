@@ -60,8 +60,6 @@ void execute_flash_dump(void)
     unsigned int16 i;
     unsigned int32 r_len;
 
-    // 型不一致(Warning 240)と構文エラー(Error 102)を避けるため
-    // 引数用の型に合わせたポインタとサイズ変数を用意します
     int8 *p_dst;
     p_dst = (int8 *)read_buffer;
     r_len = (unsigned int32)PACKET_SIZE;
@@ -70,36 +68,37 @@ void execute_flash_dump(void)
 
     for (p_num = 1; p_num <= 32; p_num++)
     {
-        // 1. アドレス計算 (32bit)
+        // 1. アドレス計算
         flash_addr = (unsigned int32)(p_num - 1);
         flash_addr *= r_len;
 
-        // 2. 指摘に基づき4引数で呼び出し (ストリーム: FLASH)
-        // 引数内でのキャストを避けることで Error 102 を回避します
-        read_data_bytes(FLASH, flash_addr, p_dst, r_len);
+        // 2. Error 54対策: FLASH定数ではなく、ストリーム変数 mis_fm を渡す
+        read_data_bytes(mis_fm, flash_addr, p_dst, r_len);
 
-        // 3. %LX を使わずに16bitずつ分割表示することで Error 114 を確実に回避
-        unsigned int16 addr_h = (unsigned int16)(flash_addr >> 16);
-        unsigned int16 addr_l = (unsigned int16)(flash_addr & 0xFFFF);
+        // 3. Error 114対策: 32bitアドレスを確実に動く 8bit x 4つ に完全に分解する
+        unsigned int8 a3 = (unsigned int8)((flash_addr >> 24) & 0xFF);
+        unsigned int8 a2 = (unsigned int8)((flash_addr >> 16) & 0xFF);
+        unsigned int8 a1 = (unsigned int8)((flash_addr >> 8)  & 0xFF);
+        unsigned int8 a0 = (unsigned int8)(flash_addr         & 0xFF);
 
-        fprintf(PC, "Packet [%u] ", p_num);
-        fprintf(PC, "Addr: 0x%04X", addr_h);
-        fprintf(PC, "%04X | ", addr_l);
+        // パケット番号も 8bit にキャスト (1〜32なので問題なし)
+        unsigned int8 p_num_8 = (unsigned int8)p_num;
 
-        for (i = 0; i < (unsigned int16)r_len; i++)
+        // 全て 8bit 用のフォーマット (%u, %02X) に統一して出力
+        fprintf(PC, "Packet [%u] ", p_num_8);
+        fprintf(PC, "Addr: 0x%02X%02X%02X%02X | ", a3, a2, a1, a0);
+
+        for (i = 0; i < PACKET_SIZE; i++)
         {
-            // 既に成功実績のある %02X を使用
             fprintf(PC, "%02X ", read_buffer[i]);
 
-            // 16バイトごとに改行
-            if (((i + 1) % 16 == 0) && (i < ((unsigned int16)r_len - 1)))
+            if (((i + 1) % 16 == 0) && (i < (PACKET_SIZE - 1)))
             {
                 fprintf(PC, "\r\n                         | ");
             }
         }
         fprintf(PC, "\r\n------------------------------------------------------------\r\n");
 
-        // 大量のデータ送信でシリアルが飽和しないようにウェイトを置く
         delay_ms(10);
     }
 
