@@ -10,7 +10,6 @@
 // ============================================================================
 
 // ミッションの全体シーケンスを実行する
-// ここから core/measurement/son_tmp_strain.c の計測関数を呼び出す
-void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate);
+void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate, uint8_t mode);
 
 #endif // son_tmp_MODE_MISSION_H

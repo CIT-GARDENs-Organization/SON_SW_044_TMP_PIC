@@ -7,7 +7,7 @@
 // ミッション実行シーケンス
 // ============================================================================
 
-void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate)
+void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate, uint8_t mode)
 {
     fprintf(PC, "--- Mission Sequence Start ---\r\n");
     piclog_make(0x11, 0x00);
@@ -27,7 +27,6 @@ void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate)
 
     fprintf(PC, "Executing Target -> BOSS_CH: %u (HW_CH: %u), SamplingRate: 0x%02X\r\n", rx_channel, hw_channel, samplingRate);
 
-    uint8_t mode = 0x01; // ヘッダーに入るmodeで仮置き
 
     execute_measurement(mode, hw_channel, samplingRate);
 

@@ -253,7 +253,7 @@
    ³  ³  ÀÄ*
    ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
-   ³  ÃÄexecute_command  0/880  Ram=5
+   ³  ÃÄexecute_command  0/1000  Ram=5
    ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³  ³  ÀÄ*
    ³  ³  ÃÄ@PRINTF_X_950  0/112  Ram=2
@@ -262,7 +262,7 @@
    ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
-   ³  ³  ÃÄexecute_mission_sequence  0/358  Ram=4
+   ³  ³  ÃÄexecute_mission_sequence  0/348  Ram=4
    ³  ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ÃÄpiclog_make  0/420  Ram=14
@@ -337,7 +337,11 @@
    ³  ³  ³     ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
+   ³  ³  ÃÄexecute_mission_sequence  0/348  Ram=4
+   ³  ³  ³  ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
+   ³  ³  ³  ÀÄ*
+   ³  ³  ÃÄexecute_mission_sequence  0/348  Ram=4
    ³  ³  ³  ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
@@ -389,6 +393,43 @@
    ³  ³  ³  ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
+   ³  ³  ÃÄprint_flash_status  0/396  Ram=0
+   ³  ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÃÄ@DIV3232  0/218  Ram=13
+   ³  ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ³  ÀÄ@DIV3232  0/218  Ram=13
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³  ³  ÀÄ*
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
+   ³  ³  ³  ÀÄ@PSTRINGC_950  0/48  Ram=3
+   ³  ³  ³     ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
@@ -415,10 +456,8 @@
    ³  ³  ³     ³  ÀÄ*
    ³  ³  ³     ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³  ³     ³  ÀÄ*
-   ³  ³  ³     ÃÄ@PRINTF_L32U_950  0/258  Ram=12
-   ³  ³  ³     ³  ÃÄ@DIV3232  0/218  Ram=13
-   ³  ³  ³     ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
-   ³  ³  ³     ³  ÀÄ@DIV3232  0/218  Ram=13
+   ³  ³  ³     ÃÄ@PRINTF_L32U_950  0/256  Ram=12
+   ³  ³  ³     ³  ÀÄ*
    ³  ³  ³     ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³  ³     ³  ÀÄ*
    ³  ³  ³     ÀÄ@PSTRINGC_950  0/48  Ram=3

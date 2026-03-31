@@ -28,18 +28,24 @@ int1 execute_command(Command* cmd)
         {
             fprintf(PC, "[CMD] STR (0xA0)\r\n");
             status = EXECUTING_MISSION;
-            execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2]);
-
+            // 第3引数に mode = 0x01 を渡す
+            execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x01);
             break;
         }
         case CMD_STR_DEBUG:
         {
             fprintf(PC, "[CMD] STR_DEBUG (0xA1)\r\n");
+            status = EXECUTING_MISSION;
+            // 第3引数に mode = 0x02 を渡す
+            execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x02);
             break;
         }
         case CMD_STR_PRINT:
         {
             fprintf(PC, "[CMD] STR_PRINT (0xA2)\r\n");
+            status = EXECUTING_MISSION;
+            // 第3引数に mode = 0x03 を渡す
+            execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x03);
             break;
         }
 
@@ -85,6 +91,7 @@ int1 execute_command(Command* cmd)
         case CMD_PICF_READ_ADDRESS:
         {
             fprintf(PC, "[CMD] PICF_READ_ADDRESS (0x87)\r\n");
+            print_flash_status();
             break;
         }
         case CMD_PICF_ERASE_AND_RESET:
