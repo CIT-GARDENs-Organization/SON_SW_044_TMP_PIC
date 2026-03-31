@@ -19,7 +19,7 @@
    ³  ÃÄio_init  0/88  Ram=0
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
-   ³  ³  ÃÄtemp_io_init  0/70  Ram=0
+   ³  ³  ÃÄtemp_io_init  0/68  Ram=0
    ³  ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ÀÄ@PSTRINGC_950  0/48  Ram=3
@@ -45,7 +45,7 @@
    ³  ³  ÃÄis_connect  0/198  Ram=25
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
-   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/550  Ram=28
+   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/552  Ram=28
    ³  ³  ³  ³  ÃÄ@SPI_XFER_1_8  0/32  Ram=3
    ³  ³  ³  ³  ÃÄ@SPI_XFER_1_8  0/32  Ram=3
    ³  ³  ³  ³  ÃÄ@SPI_XFER_2  0/96  Ram=6
@@ -66,13 +66,13 @@
    ³  ³  ÃÄread_data_bytes  0/532  Ram=28
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
-   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/550  Ram=28
+   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/552  Ram=28
    ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
-   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/550  Ram=28
+   ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/552  Ram=28
    ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ÀÄ@WRITEBITA  0/84  Ram=6
@@ -125,7 +125,7 @@
    ³  ³  ³  ÃÄstatus_register  0/160  Ram=6
    ³  ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
-   ³  ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/550  Ram=28
+   ³  ³  ³  ³  ÃÄspi_xfer_and_read_select_stream  0/552  Ram=28
    ³  ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ³  ÃÄ@WRITEBITA  0/84  Ram=6
    ³  ³  ³  ³  ÀÄ@WRITEBITA  0/84  Ram=6
@@ -306,7 +306,7 @@
    ³  ³     ³  ³  ÀÄ*
    ³  ³     ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ³     ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
-   ³  ³     ³  ÃÄexecute_measurement  0/850  Ram=147
+   ³  ³     ³  ÃÄexecute_measurement  0/908  Ram=147
    ³  ³     ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³     ³  ³  ³  ÀÄ*
    ³  ³     ³  ³  ÃÄ@PRINTF_U_950  0/170  Ram=2
@@ -317,9 +317,16 @@
    ³  ³     ³  ³  ³  ÀÄ*
    ³  ³     ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³     ³  ³  ³  ÀÄ*
+   ³  ³     ³  ³  ÃÄtemp_io_init  0/68  Ram=0
+   ³  ³     ³  ³  ³  ÀÄ*
+   ³  ³     ³  ³  ÃÄ@delay_ms1  0/46  Ram=1
    ³  ³     ³  ³  ÃÄ@MEMSET  0/36  Ram=0
    ³  ³     ³  ³  ÃÄ@MEMSET  0/36  Ram=0
+   ³  ³     ³  ³  ÃÄread_adc_ltc2452  0/74  Ram=4
+   ³  ³     ³  ³  ³  ÃÄ@SPI_XFER_1_8  0/32  Ram=3
+   ³  ³     ³  ³  ³  ÀÄ@SPI_XFER_1_8  0/32  Ram=3
    ³  ³     ³  ³  ÃÄ@MEMSET  0/36  Ram=0
+   ³  ³     ³  ³  ÃÄread_adc_internal  0/34  Ram=0
    ³  ³     ³  ³  ÃÄ@MEMSET  0/36  Ram=0
    ³  ³     ³  ³  ÃÄ@delay_ms1  0/46  Ram=1
    ³  ³     ³  ³  ÃÄ@delay_ms1  0/46  Ram=1

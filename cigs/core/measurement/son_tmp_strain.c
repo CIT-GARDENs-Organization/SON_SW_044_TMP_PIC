@@ -87,6 +87,9 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
 {
     fprintf(PC, "Start Synchronized Measurement (Mode:%u, HW_Ch:%u)\r\n", mode, hw_channel);
 
+    temp_io_init(); // 内蔵ADCの初期化 (温度計測用)
+    delay_ms(10);
+
     // ==========================================
     // 0. 測定開始時に電源・VREF・LEDをONにする
     // ==========================================
@@ -119,8 +122,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         // ----------------------------------------------------
         // [A] ひずみのADC読み取りとバッファ格納
         // ----------------------------------------------------
-        // TODO: ここでADC(LTC2452等)からひずみデータを読み取る
-        uint16_t strain_val = 0xFFFF; // ダミーデータ
+        // 外部ADC (LTC2452) から IV用データを取得
+        uint16_t strain_val = read_adc_ltc2452();
 
         // バッファに格納 (ビッグエンディアンかリトルエンディアンかはシステム仕様に合わせる)
         strain_buffer[strain_data_idx++] = (strain_val >> 8) & 0xFF;
@@ -140,8 +143,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         // ----------------------------------------------------
         // [B] 温度のADC(またはセンサ)読み取りとバッファ格納
         // ----------------------------------------------------
-        // TODO: ここで温度データを読み取る
-        uint16_t temp_val = 0xEEEE; // ダミーデータ
+        // 内蔵ADCから温度データを取得
+        uint16_t temp_val = read_adc_internal();
 
         temp_buffer[temp_data_idx++] = (temp_val >> 8) & 0xFF;
         temp_buffer[temp_data_idx++] = temp_val & 0xFF;
@@ -184,6 +187,19 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     {
         // write_to_flash(temp_packet_num, temp_buffer);
     }
+
+    // ==========================================
+    // 4. 測定終了後にアナログ回路と内蔵ADCをOFFに戻す (省電力化)
+    // ==========================================
+    // 内蔵ADCをOFFにし、ピンをデジタルに戻して節電する
+    setup_adc_ports(NO_ANALOGS);
+    setup_adc(ADC_OFF);
+
+    // 外部の電源とLEDもOFF
+    output_low(PIN_VREF_EN);
+    output_low(PIN_LDO_EN);
+    output_low(PIN_LED2);
+    output_low(PIN_LED1);
 
     fprintf(PC, "End Synchronized Measurement Sequence\r\n");
 }

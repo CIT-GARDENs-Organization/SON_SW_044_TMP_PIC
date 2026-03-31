@@ -34,6 +34,7 @@ uint16_t read_adc_internal(void)
 // 温度計測シーケンスとデータパッキング
 // ============================================================================
 
+/*
 void execute_temp_measurement(uint8_t startPacketNum, uint8_t packetCount)
 {
     TempPacketBuffer packet;
@@ -87,3 +88,4 @@ void execute_temp_measurement(uint8_t startPacketNum, uint8_t packetCount)
 
     fprintf(PC, "End Temp Measurement\r\n");
 }
+*/
