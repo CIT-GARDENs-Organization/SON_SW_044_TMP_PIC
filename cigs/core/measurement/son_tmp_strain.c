@@ -85,9 +85,9 @@ uint16_t read_adc_ltc2452()
 
 void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
 {
-    fprintf(PC, "Start Synchronized Measurement (Mode:%u, HW_Ch:%u)\r\n", mode, hw_channel);
+    fprintf(PC, "Start Synchronized Measurement (Mode:0x%02X, HW_Ch:%u)\r\n", mode, hw_channel);
 
-    // temp_io_init(); // 内蔵ADCの初期化 (温度計測用)
+    temp_io_init(); // 内蔵ADCの初期化 (温度計測用)
     delay_ms(10);
 
     // ==========================================
@@ -101,7 +101,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     // ========================================================
     // 1. バッファとパケット管理変数の初期化
     // ========================================================
-    uint16_t data_count = 319; // 測定回数 (Data Count 12bit用)
+    uint16_t data_count = 555; // 測定回数 (Data Count 12bit用)
     uint16_t packet_num = 0;   // パケット番号
     uint8_t packet_buffer[PACKET_SIZE];
     uint8_t packet_idx = 0;    // バッファの書き込み位置
@@ -135,12 +135,20 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         // ----------------------------------------------------
         uint16_t temp_val = read_adc_internal();
 
-        switch_channel(hw_channel);
-        delay_us(10);
         uint16_t strain1 = read_adc_ltc2452();
-        switch_channel(hw_channel + 1); // 次のチャンネルに切り替え
-        delay_us(10);
+
+        // アナログスイッチを対象チャンネルに切り替える
+        switch_channel(hw_channel);
+        delay_us(10); // セトリングタイム
+
         uint16_t strain2 = read_adc_ltc2452();
+
+        // ★分岐: STR_PRINT (0x03) の場合は、生データを直接シリアル出力する
+        if (mode == 0x03)
+        {
+            fprintf(PC, "[PRINT] Step:%lu, Temp:0x%03X, STR1:0x%04X, STR2:0x%04X\r\n",
+                    step, temp_val, strain1, strain2);
+        }
 
         // ----------------------------------------------------
         // [B] 6Byteデータ塊のパッキング
@@ -161,26 +169,40 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         block_count++;
 
         // ----------------------------------------------------
-        // [C] 満杯判定とFlash書き込み
+        // [C] 満杯判定と保存/出力処理
         // パケット0は9個、パケット1以降は10個で満杯
         // ----------------------------------------------------
         uint8_t max_blocks = (packet_num == 0) ? 9 : 10;
 
         if (block_count >= max_blocks)
         {
-            // CRC-24 を計算して末尾の3バイト (Byte 61, 62, 63) に格納
-            // ※ calc_crc24() は lib/tool/calc_tools に別途実装が必要です
+            // CRC-24 を計算して末尾の3バイトに格納
             uint32_t crc24 = calc_crc24(packet_buffer, 61);
             packet_buffer[61] = (crc24 >> 16) & 0xFF;
             packet_buffer[62] = (crc24 >> 8) & 0xFF;
             packet_buffer[63] = crc24 & 0xFF;
 
-            // Flashへ書き込み
-            uint32_t flash_addr = MISF_CIGS_IV_DATA_START + iv_data.used_counter;
-            write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
+            // ★分岐: modeに応じた処理
+            if (mode == 0x01)
+            {
+                // STR (通常ミッション): Flashへ書き込み
+                uint32_t flash_addr = MISF_CIGS_IV_DATA_START + iv_data.used_counter;
+                write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
 
-            iv_data.used_counter += PACKET_SIZE;
-            iv_data.uncopied_counter += PACKET_SIZE;
+                iv_data.used_counter += PACKET_SIZE;
+                iv_data.uncopied_counter += PACKET_SIZE;
+            }
+            else if (mode == 0x02)
+            {
+                // STR_DEBUG: バッファの内容をシリアルにダンプ出力 (Flashには書かない)
+                fprintf(PC, "[DEBUG] Packet %lu: ", packet_num);
+                for (uint8_t i = 0; i < PACKET_SIZE; i++)
+                {
+                    fprintf(PC, "%02X ", packet_buffer[i]);
+                }
+                fprintf(PC, "\r\n");
+            }
+            // mode == 0x03 (STR_PRINT) の場合は、上で毎ステップ出力しているのでここでは何もしない
 
             // 次のパケットの準備
             packet_num++;
@@ -206,7 +228,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     }
 
     // ========================================================
-    // 3. ループ終了後、端数（満杯にならなかった分）をFlashへ保存
+    // 3. ループ終了後、端数（満杯にならなかった分）の処理
     // ========================================================
     if (block_count > 0)
     {
@@ -215,15 +237,31 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         packet_buffer[62] = (crc24 >> 8) & 0xFF;
         packet_buffer[63] = crc24 & 0xFF;
 
-        uint32_t flash_addr = MISF_CIGS_IV_DATA_START + iv_data.used_counter;
-        write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
+        // ★分岐: 端数分の処理も mode に応じて分ける
+        if (mode == 0x01)
+        {
+            uint32_t flash_addr = MISF_CIGS_IV_DATA_START + iv_data.used_counter;
+            write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
 
-        iv_data.used_counter += PACKET_SIZE;
-        iv_data.uncopied_counter += PACKET_SIZE;
+            iv_data.used_counter += PACKET_SIZE;
+            iv_data.uncopied_counter += PACKET_SIZE;
+        }
+        else if (mode == 0x02)
+        {
+            fprintf(PC, "[DEBUG] Packet %lu (Fraction): ", packet_num);
+            for (uint8_t i = 0; i < PACKET_SIZE; i++)
+            {
+                fprintf(PC, "%02X ", packet_buffer[i]);
+            }
+            fprintf(PC, "\r\n");
+        }
     }
 
-    // Flashのアドレス管理領域を一度だけセーブ
-    write_misf_address_area();
+    // Flashのアドレス管理領域を一度だけセーブ (通常ミッション時のみ)
+    if (mode == 0x01)
+    {
+        write_misf_address_area();
+    }
 
     // ==========================================
     // 4. 測定終了後にアナログ回路と内蔵ADCをOFFに戻す
