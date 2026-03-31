@@ -19,7 +19,7 @@
    ³  ÃÄio_init  0/88  Ram=0
    ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ÀÄ*
-   ³  ³  ÃÄtemp_io_init  0/68  Ram=0
+   ³  ³  ÃÄtemp_io_init  0/70  Ram=0
    ³  ³  ³  ÃÄ@PSTRINGC_950  0/48  Ram=3
    ³  ³  ³  ³  ÀÄ*
    ³  ³  ³  ÀÄ@PSTRINGC_950  0/48  Ram=3
@@ -306,7 +306,7 @@
    ³  ³     ³  ³  ÀÄ*
    ³  ³     ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
    ³  ³     ³  ÃÄ@PUTCHAR_1_  0/82  Ram=1
-   ³  ³     ³  ÃÄexecute_measurement  0/1514  Ram=108
+   ³  ³     ³  ÃÄexecute_measurement  0/1510  Ram=108
    ³  ³     ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
    ³  ³     ³  ³  ³  ÀÄ*
    ³  ³     ³  ³  ÃÄ@PRINTF_U_950  0/170  Ram=2
@@ -316,8 +316,6 @@
    ³  ³     ³  ³  ÃÄ@PRINTF_U_950  0/170  Ram=2
    ³  ³     ³  ³  ³  ÀÄ*
    ³  ³     ³  ³  ÃÄ@PSTRINGCN_950  0/54  Ram=4
-   ³  ³     ³  ³  ³  ÀÄ*
-   ³  ³     ³  ³  ÃÄtemp_io_init  0/68  Ram=0
    ³  ³     ³  ³  ³  ÀÄ*
    ³  ³     ³  ³  ÃÄ@delay_ms1  0/46  Ram=1
    ³  ³     ³  ³  ÃÄ@MEMSET  0/36  Ram=0

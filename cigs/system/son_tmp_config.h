@@ -56,13 +56,37 @@
 // ==========================================
 // 2. システムシーケンス コマンド定義
 // ==========================================
-#define CMD_MISSION_START       0x10
-#define RES_MISSION_DONE        0x11
+/*
+#define ERASE_ALL               0X80
+#define ERASE_1SECTOR           0X81
+#define ERASE_4kBYTE_SUBSECTOR  0X82
+#define ERASE_64kBYTE_SUBSECTOR 0X83
+#define WRITE_DEMO              0X84
+#define WRITE_4kByte_SUBSECTOR  0X85
+#define READ                    0X86
+#define READ_ADDRESS            0X87
+#define ERASE_AND_RESET         0X88
+#define READ_AREA               0X89
+#define RESET_ADDRESS           0X8F
+#define COPY                    0x90
+#define READ                    0x91
+#define ERASE                   0x92
+#define COPY_FORCE              0x93
+#define READ_FORCE              0x94
+#define ERASE_FORCE             0x95
+#define STR                     0xA0
+#define STR_DEBUG               0xA1
+#define STR_PRINT               0xA2
+#define RETURN_TIME             0xB0
+*/
+
+#define CMD_MISSION_START       0xA0
 #define CMD_FLASH_DUMP          0x12
 #define CMD_SMF_PREPARE         0x20
 #define REQ_SMF_COPY            0x21
 #define CMD_SMF_PERMIT          0x22
 #define REQ_POWER_OFF           0x30
+
 
 #define SAMP_RATE_10MS          0x01  // 0.01秒
 #define SAMP_RATE_50MS          0x02  // 0.05秒
@@ -70,6 +94,9 @@
 #define SAMP_RATE_500MS         0x04  // 0.50秒
 #define SAMP_RATE_1000MS        0x05  // 1.00秒
 #define SAMP_RATE_5000MS        0x06  // 5.00秒
+#define SAMP_RATE_2432MS        0x07  // 2.432秒 (0.25周回連続計測)
+#define SAMP_RATE_4865MS        0x08  // 4.865秒 (0.5周回連続計測)
+#define SAMP_RATE_9730MS        0x09  // 9.730秒 (1周回連続計測)
 
 // ==========================================
 // 3. データフォーマット・バッファ定義
@@ -78,38 +105,5 @@
 #define FLASH_PAGE_SIZE         256
 #define PACKETS_PER_PAGE        4
 #define SMF_TRANSFER_PACKETS    15
-
-// ヘッダー構造体 (8Byte)
-typedef struct
-{
-    unsigned int32 timestamp;      // 4 Byte
-    unsigned int8  mode : 3;       // 3 bit
-    unsigned int8  channel : 1;    // 1 bit
-    unsigned int8  samplingRate : 4; // 4 bit
-    unsigned int16 dataCount;      // 12bitではなく16bit(2Byte)で確保しエラーを回避
-    unsigned int8  zeroFill;       // 1 Byte (合計8Byteにするため)
-} PacketHeader;
-
-typedef struct
-{
-    PacketHeader header;           // 8 Byte
-    unsigned int8 packetNum;       // 1 Byte
-    unsigned int16 adcData[27];    // 54 Byte
-    unsigned int8 crc8;            // 1 Byte
-} FirstPacket;
-
-typedef struct
-{
-    unsigned int8 packetNum;       // 1 Byte
-    unsigned int16 adcData[31];    // 62 Byte
-    unsigned int8 crc8;            // 1 Byte
-} SubsequentPacket;
-
-typedef union
-{
-    unsigned int8 raw[PACKET_SIZE];
-    FirstPacket first;
-    SubsequentPacket sub;
-} PacketBuffer;
 
 #endif // son_tmp_CONFIG_H

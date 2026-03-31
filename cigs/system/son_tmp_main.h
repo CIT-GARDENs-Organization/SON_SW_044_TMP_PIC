@@ -23,8 +23,6 @@
 
 // レベル4: デバイスドライバヘッダー
 #include "../../lib/device/mt25q.h"
-// #include "../../lib/device/ad7490.h"
-// #include "../../lib/device/mcp4901.h"
 
 // レベル5: 通信ライブラリヘッダー
 #include "../../lib/communication/communication.h"

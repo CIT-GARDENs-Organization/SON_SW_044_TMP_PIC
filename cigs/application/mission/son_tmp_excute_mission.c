@@ -12,27 +12,6 @@
 unsigned int8 status = 0;
 int1 is_use_smf_req_in_mission = 0;
 
-/*
-void cigs_system_init(void)
-{
-    setup_adc_ports(NO_ANALOGS);
-    output_high(PIN_B3);
-    fprintf(PC, "TMP System Initialize Start\r\n");
-
-    disable_interrupts(GLOBAL);
-
-    setup_timer();
-    setup_uart_to_boss();
-
-    status = 0;
-    is_use_smf_req_in_mission = 0;
-
-    piclog_make(0x00, 0x00);
-
-    fprintf(PC, "TMP System Initialize Complete\r\n");
-}
-*/
-
 // ★ 変更1: uint8_t ではなく Command構造体を丸ごと受け取る
 static void process_boss_command(Command* cmd_struct)
 {

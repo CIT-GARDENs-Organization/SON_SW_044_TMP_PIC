@@ -11,7 +11,7 @@ void main()
     fprintf(PC,"Last updated on %s %s.\r\n\r\n", __DATE__, __TIME__);
 
     io_init();
-    setup_uart_to_boss(); // 割り込みはオフになっています
+    setup_uart_to_boss();
     setup_timer();
     misf_init();
 
