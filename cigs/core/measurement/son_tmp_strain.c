@@ -101,7 +101,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     // ========================================================
     // 1. バッファとパケット管理変数の初期化
     // ========================================================
-    uint16_t data_count = 555; // 測定回数 (Data Count 12bit用)
+    uint16_t data_count = 319; // 測定回数 (Data Count 12bit用)
     uint16_t packet_num = 0;   // パケット番号
     uint8_t packet_buffer[PACKET_SIZE];
     uint8_t packet_idx = 0;    // バッファの書き込み位置

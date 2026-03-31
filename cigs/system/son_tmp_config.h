@@ -54,38 +54,41 @@
 #endif
 
 // ==========================================
-// 2. システムシーケンス コマンド定義
+// 2. システムシーケンス コマンド定義 (刷新版)
 // ==========================================
-/*
-#define ERASE_ALL               0X80
-#define ERASE_1SECTOR           0X81
-#define ERASE_4kBYTE_SUBSECTOR  0X82
-#define ERASE_64kBYTE_SUBSECTOR 0X83
-#define WRITE_DEMO              0X84
-#define WRITE_4kByte_SUBSECTOR  0X85
-#define READ                    0X86
-#define READ_ADDRESS            0X87
-#define ERASE_AND_RESET         0X88
-#define READ_AREA               0X89
-#define RESET_ADDRESS           0X8F
-#define COPY                    0x90
-#define READ                    0x91
-#define ERASE                   0x92
-#define COPY_FORCE              0x93
-#define READ_FORCE              0x94
-#define ERASE_FORCE             0x95
-#define STR                     0xA0
-#define STR_DEBUG               0xA1
-#define STR_PRINT               0xA2
-#define RETURN_TIME             0xB0
-*/
 
-#define CMD_MISSION_START       0xA0
-#define CMD_FLASH_DUMP          0x12
-#define CMD_SMF_PREPARE         0x20
-#define REQ_SMF_COPY            0x21
-#define CMD_SMF_PERMIT          0x22
-#define REQ_POWER_OFF           0x30
+// --- 応答・システム制御用 ---
+#define RES_MISSION_DONE            0x11
+#define REQ_POWER_OFF               0x30
+
+// --- PICF (Mission Flash) 関連 ---
+#define CMD_PICF_ERASE_ALL          0x80
+#define CMD_PICF_ERASE_1SECTOR      0x81
+#define CMD_PICF_ERASE_4K_SUBSECTOR 0x82
+#define CMD_PICF_ERASE_64K_SUBSECTOR 0x83
+#define CMD_PICF_WRITE_DEMO         0x84
+#define CMD_PICF_WRITE_4K_SUBSECTOR 0x85
+#define CMD_PICF_READ               0x86
+#define CMD_PICF_READ_ADDRESS       0x87
+#define CMD_PICF_ERASE_AND_RESET    0x88
+#define CMD_PICF_READ_AREA          0x89
+#define CMD_PICF_RESET_ADDRESS      0x8F
+
+// --- SMF (CPLD Flash) 関連 ---
+#define CMD_SMF_COPY                0x90
+#define CMD_SMF_READ                0x91
+#define CMD_SMF_ERASE               0x92
+#define CMD_SMF_COPY_FORCE          0x93
+#define CMD_SMF_READ_FORCE          0x94
+#define CMD_SMF_ERASE_FORCE         0x95
+
+// --- 計測 (Strain) 関連 ---
+#define CMD_STR                     0xA0
+#define CMD_STR_DEBUG               0xA1
+#define CMD_STR_PRINT               0xA2
+
+// --- その他 ---
+#define CMD_RETURN_TIME             0xB0
 
 
 #define SAMP_RATE_10MS          0x01  // 0.01秒

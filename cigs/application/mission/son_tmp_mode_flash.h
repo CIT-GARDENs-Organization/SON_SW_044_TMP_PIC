@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "../../system/son_tmp_config.h"
+#include "../../../lib/communication/typedef_content.h"
 
 // ============================================================================
 // 外部公開関数プロトタイプ

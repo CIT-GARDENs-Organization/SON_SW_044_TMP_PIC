@@ -1,7 +1,6 @@
-Compiling C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\son_tmp_main on 31-3-26 at 14:24
+Compiling C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\son_tmp_main on 31-3-26 at 15:32
 >>> Warning 214 "C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\cigs\core\measurement\son_tmp_strain.c" Line 179(1,1): Operator precedance rules may not be as intended, use () to clarify
 >>> Warning 214 "C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\cigs\core\measurement\son_tmp_strain.c" Line 218(1,1): Operator precedance rules may not be as intended, use () to clarify
->>> Warning 245 "C:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\son_tmp_main.c" Line 107(0,1): File may have mis-matched #if/#endif
       Memory usage:   ROM=14%      RAM=10% - 17%
-      0 Errors,  3 Warnings.
+      0 Errors,  2 Warnings.
 Build Successful.

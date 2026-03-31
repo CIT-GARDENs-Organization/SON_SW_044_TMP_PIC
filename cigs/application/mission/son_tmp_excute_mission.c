@@ -12,75 +12,153 @@
 unsigned int8 status = 0;
 int1 is_use_smf_req_in_mission = 0;
 
-// ★ 変更1: uint8_t ではなく Command構造体を丸ごと受け取る
-static void process_boss_command(Command* cmd_struct)
+int1 execute_command(Command* cmd)
 {
-    // 本当のコマンドID(10など)は content[0] に入っている
-    uint8_t cmd_id = cmd_struct->content[0];
+    if (!cmd->is_exist) return false;
 
+    uint8_t cmd_id = cmd->frame_id;
     fprintf(PC, "Received Command: 0x%02X\r\n", cmd_id);
 
     switch (cmd_id)
     {
-        case CMD_MISSION_START:
+        // ----------------------------------------------------
+        // 計測コマンド
+        // ----------------------------------------------------
+        case CMD_STR:
         {
+            fprintf(PC, "[CMD] STR (0xA0)\r\n");
             status = EXECUTING_MISSION;
-            // ★ 変更2: バケツリレーで構造体を丸ごとミッションに渡す
-            execute_mission_sequence(cmd_struct);
+            execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2]);
+
             break;
         }
-        case CMD_FLASH_DUMP: // ★追加: 0x12を受信した場合
+        case CMD_STR_DEBUG:
         {
+            fprintf(PC, "[CMD] STR_DEBUG (0xA1)\r\n");
+            break;
+        }
+        case CMD_STR_PRINT:
+        {
+            fprintf(PC, "[CMD] STR_PRINT (0xA2)\r\n");
+            break;
+        }
+
+        // ----------------------------------------------------
+        // PICF (Mission Flash) コマンド
+        // ----------------------------------------------------
+        case CMD_PICF_READ:
+        {
+            fprintf(PC, "[CMD] PICF_READ (0x86)\r\n");
             execute_flash_dump();
             break;
         }
-        case CMD_SMF_PREPARE:
+        case CMD_PICF_ERASE_ALL:
         {
+            fprintf(PC, "[CMD] PICF_ERASE_ALL (0x80)\r\n");
+            break;
+        }
+        case CMD_PICF_ERASE_1SECTOR:
+        {
+            fprintf(PC, "[CMD] PICF_ERASE_1SECTOR (0x81)\r\n");
+            break;
+        }
+        case CMD_PICF_ERASE_4K_SUBSECTOR:
+        {
+            fprintf(PC, "[CMD] PICF_ERASE_4K_SUBSECTOR (0x82)\r\n");
+            break;
+        }
+        case CMD_PICF_ERASE_64K_SUBSECTOR:
+        {
+            fprintf(PC, "[CMD] PICF_ERASE_64K_SUBSECTOR (0x83)\r\n");
+            break;
+        }
+        case CMD_PICF_WRITE_DEMO:
+        {
+            fprintf(PC, "[CMD] PICF_WRITE_DEMO (0x84)\r\n");
+            break;
+        }
+        case CMD_PICF_WRITE_4K_SUBSECTOR:
+        {
+            fprintf(PC, "[CMD] PICF_WRITE_4K_SUBSECTOR (0x85)\r\n");
+            break;
+        }
+        case CMD_PICF_READ_ADDRESS:
+        {
+            fprintf(PC, "[CMD] PICF_READ_ADDRESS (0x87)\r\n");
+            break;
+        }
+        case CMD_PICF_ERASE_AND_RESET:
+        {
+            fprintf(PC, "[CMD] PICF_ERASE_AND_RESET (0x88)\r\n");
+            break;
+        }
+        case CMD_PICF_READ_AREA:
+        {
+            fprintf(PC, "[CMD] PICF_READ_AREA (0x89)\r\n");
+            break;
+        }
+        case CMD_PICF_RESET_ADDRESS:
+        {
+            fprintf(PC, "[CMD] PICF_RESET_ADDRESS (0x8F)\r\n");
+            break;
+        }
+
+        // ----------------------------------------------------
+        // SMF (CPLD Flash) コマンド
+        // ----------------------------------------------------
+        case CMD_SMF_COPY:
+        {
+            fprintf(PC, "[CMD] SMF_COPY (0x90)\r\n");
             status = COPYING;
             prepare_smf_transfer();
             break;
         }
-        case REQ_SMF_COPY:
+        case CMD_SMF_READ:
         {
-            execute_smf_transfer();
+            fprintf(PC, "[CMD] SMF_READ (0x91)\r\n");
             break;
         }
-        case CMD_SMF_PERMIT:
+        case CMD_SMF_ERASE:
         {
-            permit_smf_transfer();
+            fprintf(PC, "[CMD] SMF_ERASE (0x92)\r\n");
+            break;
+        }
+        case CMD_SMF_COPY_FORCE:
+        {
+            fprintf(PC, "[CMD] SMF_COPY_FORCE (0x93)\r\n");
+            break;
+        }
+        case CMD_SMF_READ_FORCE:
+        {
+            fprintf(PC, "[CMD] SMF_READ_FORCE (0x94)\r\n");
+            break;
+        }
+        case CMD_SMF_ERASE_FORCE:
+        {
+            fprintf(PC, "[CMD] SMF_ERASE_FORCE (0x95)\r\n");
+            break;
+        }
+
+        // ----------------------------------------------------
+        // その他・システム制御コマンド
+        // ----------------------------------------------------
+        case CMD_RETURN_TIME:
+        {
+            fprintf(PC, "[CMD] RETURN_TIME (0xB0)\r\n");
             break;
         }
         case REQ_POWER_OFF:
         {
-            status = 0;
+            fprintf(PC, "[CMD] POWER_OFF (0x30)\r\n");
+            status = IDLE;
             break;
         }
         default:
         {
-            fprintf(PC, "Unknown Command: 0x%02X\r\n", cmd_id);
+            fprintf(PC, "Command received but not implemented yet: 0x%02X\r\n", cmd_id);
             break;
         }
     }
-}
 
-int1 execute_command(Command* cmd)
-{
-    uint8_t lib_frame_id = cmd->frame_id;
-
-    transmit_ack();
-
-    if (lib_frame_id == 0x01)
-    {
-        fprintf(PC, "Received Ping (Heartbeat)\r\n");
-        return TRUE;
-    }
-
-    uint8_t real_cmd = cmd->content[0];
-
-    piclog_make(0x10, real_cmd);
-
-    // ★ 変更3: process_boss_command に構造体を丸ごと渡す
-    process_boss_command(cmd);
-
-    return TRUE;
+    return true;
 }
