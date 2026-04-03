@@ -1,4 +1,4 @@
-#include "cigs/system/son_tmp_main.h"
+#include "tmp/system/son_tmp_main.h"
 
 void main()
 {
