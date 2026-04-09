@@ -9,13 +9,7 @@
 #define RESET_PIC 0x03
 #define FAB_PIC   0x04
 #define BOSS_PIC  0x05
-#define APRS_PIC  0x06
-#define CAM_MCU   0x07
-#define CHO_MCU   0x08
-#define NAKA_PIC  0x09
-#define SATO_PIC  0x0A
-#define BHU_MCU   0x0B
-#define CIGS_PIC  0x0C
+#define TMP_PIC  0x0A
 
  // <- change to your device name
 

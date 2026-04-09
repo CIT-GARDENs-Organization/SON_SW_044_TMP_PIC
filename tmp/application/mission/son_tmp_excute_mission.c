@@ -200,7 +200,7 @@ int1 execute_command(Command* cmd)
                 break;
             }
         }
-        
+
         status = FINISHED;
     }
     // ----------------------------------------------------
@@ -210,6 +210,23 @@ int1 execute_command(Command* cmd)
     {
         // 問い合わせが来た時だけ、現在のステータスを返す（ポーリング応答）
         fprintf(PC, "Received STATUS_CHECK (0x01). Replying status: %u\r\n", status);
+        transmit_status();
+    }
+    // ★追加: Frame ID 0x03 を定期的な同期・ステータス確認として処理し、時刻を更新する
+    else if (cmd->frame_id == 0x03)
+    {
+        // ペイロード(4Byte)から時刻を抽出 (リトルエンディアン想定: 1E 00 00 00 -> 0x0000001E = 30)
+        uint32_t received_time = ((uint32_t)cmd->content[3] << 24) |
+                                 ((uint32_t)cmd->content[2] << 16) |
+                                 ((uint32_t)cmd->content[1] << 8)  |
+                                 (uint32_t)cmd->content[0];
+
+        // タイマーモジュールの秒カウンタを上書き更新する
+        set_current_sec(received_time);
+
+        fprintf(PC, "Received TIME_SYNC (0x03). Time updated to: %lu sec. Replying status: %u\r\n", received_time, status);
+
+        // BOSSに現在の状態を返す
         transmit_status();
     }
     else

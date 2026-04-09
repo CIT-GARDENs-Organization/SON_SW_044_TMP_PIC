@@ -84,30 +84,40 @@ uint16_t read_adc_ltc2452()
 // ============================================================================
 void check_boss_status_polling(void)
 {
-    // 簡易ステートマシン用の静的変数 (関数を抜けても状態を保持する)
     static uint8_t rx_state = 0;
+    static uint8_t expected_len = 0;
 
     // 受信箱にデータがある限り読み出し続ける（溢れ防止）
     while (kbhit(BOSS))
     {
         uint8_t c = fgetc(BOSS);
 
-        // AA C1 C1 の並びを探す
+        // AA A1 (3バイト) または AA A3 (7バイト) の並びを探す
         if (rx_state == 0 && c == 0xAA) {
             rx_state = 1;
         }
-        else if (rx_state == 1 && c == 0xC1) {
-            rx_state = 2;
+        else if (rx_state == 1) {
+            if (c == 0xA1 || c == 0xC1) {      // STATUS_CHECK (旧C1/新A1)
+                expected_len = 3;
+                rx_state = 2;
+            }
+            else if (c == 0xA3 || c == 0xC3) { // TIME_SYNC/STATUS (旧C3/新A3)
+                expected_len = 7;
+                rx_state = 2;
+            }
+            else {
+                rx_state = (c == 0xAA) ? 1 : 0;
+            }
         }
-        else if (rx_state == 2 && c == 0xC1) {
-            // STATUS_CHECK (AA C1 C1) 受信完了！
-            fprintf(PC, "\r\n[INFO] STATUS_CHECK (AA C1 C1) Received. Sending Status...\r\n");
-            transmit_status(); // 生存通知を返す
-            rx_state = 0;      // 状態リセット
-        }
-        else {
-            // 順番が崩れたらリセット（ただし 0xAA だったら状態1から再開）
-            rx_state = (c == 0xAA) ? 1 : 0;
+        else if (rx_state >= 2) {
+            rx_state++; // ペイロードとCRCを読み飛ばす
+
+            // 期待する長さに達したら受信完了として扱う
+            if (rx_state == expected_len) {
+                fprintf(PC, "\r\n[INFO] STATUS/SYNC Received during measurement. Sending Status...\r\n");
+                transmit_status(); // 生存通知を返す
+                rx_state = 0;      // 状態リセット
+            }
         }
     }
 }
@@ -167,7 +177,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     // 2. メインサンプリングループ
     for (uint16_t step = 0; step < data_count; step++)
     {
-        // [A.5] ★測定開始前にも一度チラ見する
+        // [A.5] 測定開始前にも一度チラ見する
         check_boss_status_polling();
 
         // [A] データの読み取り

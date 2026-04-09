@@ -1,7 +1,7 @@
 #ifndef son_tmp_CONFIG_H
 #define son_tmp_CONFIG_H
 
-#define SELF_DEVICE_ID CIGS_PIC
+#define SELF_DEVICE_ID TMP_PIC
 
 #include <18F67J94.h>
 #opt 0 // 0 = no optimization

@@ -5,13 +5,12 @@ import re
 import serial
 import serial.tools.list_ports
 import sys
-import argparse
 from datetime import datetime
 
 setting = {
     "retransmit_time": 2,           # Retransmit limit
     "timeout": 3.0,                 # The time until retransmit
-    "permission_probability": 0.9,  # Permit rate for SMF copy REQ from MIS MCU 
+    "permission_probability": 0.9,  # Permit rate for SMF copy REQ from MIS MCU
     "wait_time": 10,                # The time of BOSS PIC comunicating with other MIS MCU
     "debug_mode": False             # If set True, you will always be able to type command in CLI
 }
@@ -31,7 +30,7 @@ class Print:
     @staticmethod
     def get_timestamp() -> str:
         return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
+
     @staticmethod
     def timestamped(message: str) -> str:
         return f"[{Print.get_timestamp()}] {message}"
@@ -39,7 +38,7 @@ class Print:
     @staticmethod
     def space_every_two_str(bytes: bytes) -> str:
         return " ".join(bytes.hex()[i:i+2].upper() for i in range(0, len(bytes.hex()), 2))
-    
+
     @staticmethod
     def wait(sec: int) -> None:
         for _ in range(sec):
@@ -54,6 +53,8 @@ class FrameData:
     payload: bytes | None
 
 
+is_selected_cigs: bool = False
+
 # command making, check etc...
 class Command:
     # most foundamental define
@@ -65,6 +66,7 @@ class Command:
     # flame id (mis mcu receive)
     STATUS_CHECK = b'\x01'
     IS_SMF_AVAILABLE = b'\x02'
+    SEND_TIME = b'\x03'
 
     # IS_SMF_AVAILABLE payload
     ALLOW = b'\x01'
@@ -83,36 +85,24 @@ class Command:
     UL_CMD = b'\x00'
     ACK = b'\x0F'
 
-    FRAME_ID_PAYLOAD_LENGTH = {STATUS_CHECK: 0, IS_SMF_AVAILABLE: 1, MIS_MCU_STATUS: 1, UL_CMD: 8, ACK: 0}
-    
+    FRAME_ID_PAYLOAD_LENGTH = {STATUS_CHECK: 0, IS_SMF_AVAILABLE: 1, MIS_MCU_STATUS: 1, UL_CMD: 8, ACK: 0, SEND_TIME: 4}
+
     @staticmethod
-    def input_payload(cmd_payload=None) -> bytes:
-        if cmd_payload:
-            # コマンドライン引数から受け取った場合
-            print(f'Using command from command line: {cmd_payload}')
-            # 9バイトの16進文字列（18文字）を期待
-            if re.fullmatch('[0-9A-F]{18}', cmd_payload.replace(' ', '').upper()):
-                return bytes.fromhex(cmd_payload.replace(' ', '').upper())
-            else:
-                print(f'{Print.ERROR} Invalid command format: {cmd_payload}')
-                print(f'Expected 9 bytes in hex format (18 characters)')
-                sys.exit(1)
-        
-        # 従来の対話的入力
+    def input_payload() -> bytes:
         print(f'Enter uplink command in hex {Print.BOLD}(CMD ID, CMD Parameter only. {Print.RESET}SFD, Device ID, Frame ID, CRC automatically addition.)')
         print('  __ __ __ __ __ __ __ __ __')
         while True:
             input_str = input('> ').replace(' ', '').upper()
             if re.fullmatch('[0-9A-F]{18}', input_str):
                 return bytes.fromhex(input_str)
-            
+
     @staticmethod
     def calc_crc(data: bytes) -> bytes:
         crc = data[0]
         for dt in data[1:]:
             crc ^= dt
         return crc.to_bytes(1, 'big')
-    
+
     @staticmethod
     def check_crc(data: bytes) -> bool:
         received_crc = data[-1].to_bytes(1, 'big')
@@ -124,7 +114,7 @@ class Command:
             print(Print.timestamped(f"\t-> received crc: {int.from_bytes(received_crc):02X}"))
             print(Print.timestamped(f"\t   collect crc : {int.from_bytes(collect_crc):02X}"))
             return False
-    
+
     @staticmethod
     def device_id_check(data: bytes) -> bool:
         received_device_id =  ((data[1] & 0xF0) >> 4).to_bytes(1, 'big')
@@ -141,7 +131,7 @@ class Command:
         header = ((device_id[0] << 4) | frame_id[0]).to_bytes(1, 'big')
         crc = Command.calc_crc(header + payload)
         return Command.SFD + header + payload + crc
-    
+
     @staticmethod
     def manual_input_bytes() -> bytes:
         while True:
@@ -164,11 +154,11 @@ class Command:
             return FrameData(Command.MIS_MCU_STATUS, data[2].to_bytes())
         else:
             return FrameData(None, None)
-    
+
 # role of communications in general
 class Communication:
-    MIS_MCU_DEVICES = {0x06: 'APRS PIC', 0x07: 'CAM MCU', 0x08: 'CHO MCU', 
-                       0x09: 'SATO PIC', 0x0A: 'NAKA PIC', 0x0B: 'BHU MCU', 0x0C: 'CIGS PIC'}
+    MIS_MCU_DEVICES = {0x06: 'APRS PIC', 0x07: 'CAM MCU', 0x08: 'Pico2',
+                       0x09: 'ST PIC', 0x0A: 'TMP PIC', 0x0B: 'BHU MCU', 0x0C: 'NCOM PIC'}
 
     def __init__(self):
         self.ser = None
@@ -177,18 +167,6 @@ class Communication:
     def setup(self):
         self.select_port()
         self.select_device_id()
-
-    def setup_with_args(self, com_port, baud_rate):
-        """コマンドライン引数で指定されたポートとボーレートで設定"""
-        try:
-            print(f'Using COM port: {com_port} at {baud_rate} baud')
-            self.ser = serial.Serial(com_port, baudrate=int(baud_rate), timeout=1)
-            # デフォルトでCIGS PICを使用
-            self.device_id = bytes.fromhex('0C')
-            print(f'Using device: CIGS PIC (ID: 0C)')
-        except serial.SerialException as e:
-            print(f'{Print.ERROR} Failed to open {com_port}: {str(e)}')
-            sys.exit(1)
 
     def select_port(self):
         print('Select using port')
@@ -222,6 +200,9 @@ class Communication:
             if re.fullmatch(f'^[6-9A-F]$', choice):
                 self.device_id = bytes.fromhex('0' + choice)
                 print(f'Using device: {self.MIS_MCU_DEVICES[int(choice, 16)]}')
+                if self.device_id == b'\x0A': # change TMP
+                    global is_selected_cigs
+                    is_selected_cigs = True
                 return
 
     def transmit_and_receive_command(self, command: bytes) -> bytes | None:
@@ -243,7 +224,7 @@ class Communication:
                         print(Print.timestamped(f'\t\t{Print.BOLD}BOSS < < < [{Print.space_every_two_str(response)}] < < < MIS MCU\n'))
                         return response
         return None
-    
+
     def receive(self) -> bytes | None:    # TODO: write more smater code.
         response = b''
         timeout = setting["timeout"]
@@ -272,160 +253,101 @@ class Communication:
 
         frame_data = Command.parse_frame(response)
         if not frame_data.frame_id:
-            quit_software(self, 3)
+            return
         elif frame_data.frame_id == Command.ACK:
             print(Print.timestamped(f"{Print.INFO} BOSS PIC receive ACK frame"))
         else:
-            quit_software(self, 4)
+            return
 
     def close(self):
         if self.ser:
             self.ser.close()
-
-def quit_software(com: Communication, code: int) -> None:
-    if code == 0:
-        print(Print.timestamped(f""))
-    if code == 1:
-        print(Print.timestamped(f'{Print.ERROR} BOSS PIC didn\'t receive command.'))
-        print(Print.timestamped(f'\t->BOSS PIC assumed error has occured in MIS MCU'))
-        print(Print.timestamped(f'\t  MIS MCU is stopped by BOSS PIC'))
-    elif code == 2:
-        print(Print.timestamped(f'{Print.ERROR} BOSS PIC didn\'t receive ACK')) 
-    elif code == 3:
-        print(Print.timestamped(f'{Print.ERROR} Frame ID doesn\'t exist'))
-    elif code == 4:
-        print(Print.timestamped(f'{Print.ERROR} It\'s impossible to BOSS PIC receive ACK in this case'))
-
-    close_and_exit(com)
 
 def close_and_exit(com) -> None:
     com.close()
     print(Print.timestamped(f"Software quit."))
     sys.exit()
 
-
-def main(com_port=None, baud_rate=None, command=None):
+def main():
     print(f'\n================================')
     print(f'=== {Print.BOLD}BOSS PIC Simulator v1.00{Print.RESET} ===')
     print(f'================================\n')
 
     com = Communication()
-    if com_port and baud_rate:
-        # COMポートとボーレートが指定された場合
-        com.setup_with_args(com_port, baud_rate)
-    else:
-        # 従来の対話的設定
-        com.setup()
+    com.setup()
 
-    print(f'\n{Print.LINE}\n')
-    
-    # コマンド引数が指定されている場合は単発実行
-    if command:
-        uplink_command_payload = Command.input_payload(command)
+    # ★ 追加: プログラム全体を終わらせず、何度もコマンドを打てるようにする無限ループ
+    while True:
+        print(f'\n{Print.LINE}\n')
+        uplink_command_payload = Command.input_payload()
         uplink_command = Command.make_command(com.device_id, Command.UL_CMD, uplink_command_payload)
-        execute_mission(com, uplink_command)
-    else:
-        # インタラクティブモード
-        interactive_mode(com)
 
-def interactive_mode(com):
-    """インタラクティブモードでコマンドを連続実行"""
-    print(f'{Print.INFO} インタラクティブモードで開始しました')
-    print(f'コマンド入力待機中... (\'exit\' で終了)')
-    print(f'使用方法:')
-    print(f'  - 16進数でコマンドを入力: C0 00 00 00 00 00 00 00 00')
-    print(f'  - command_uiからコマンドを送信可能')
-    print(f'  - \'exit\' または Ctrl+C で終了')
-    print(f'{Print.LINE}')
-    
-    try:
+        print(Print.timestamped(f"{Print.INFO} BOSS PIC received uplink command"))
+        time.sleep(1)
+
+        if is_selected_cigs:
+            print("Transmit Current time to CIGS/TMP PIC")
+            # Build packet: 0xAAC3 followed by elapsed seconds from Jan 1 00:00:00 of current year
+            def build_cigs_time_packet() -> bytes:
+                now = datetime.now()
+                now = datetime(year=now.year, month=1, day=1, hour=0, minute=0, second=30)
+                year_start = datetime(year=now.year, month=1, day=1, hour=0, minute=0, second=0)
+                elapsed = int((now - year_start).total_seconds())
+                # uint32 little-endian
+                return elapsed.to_bytes(4, 'little', signed=False)
+
+            data: bytes = build_cigs_time_packet()
+            print(Print.timestamped(f"Time packet: {Print.space_every_two_str(data)}"))
+
+            cigs_command = Command.make_command(com.device_id, Command.SEND_TIME, data)
+            response = com.transmit_and_receive_command(cigs_command)
+            time.sleep(2)
+
+        response = com.transmit_and_receive_command(uplink_command)
+
+        # ステータス確認とやり取りを行う内側のループ
         while True:
-            try:
-                print(f'\n> ', end='', flush=True)
-                user_input = input().strip()
-                
-                if user_input.lower() in ['exit', 'quit', 'q']:
+            if not response:
+                print(Print.timestamped(f"{Print.ERROR} 応答がありません。コマンド入力に戻ります。"))
+                break # ★ 内側のループを抜けて、外側の while True (コマンド入力) に戻る
+
+            frame_data = Command.parse_frame(response)
+            if frame_data.frame_id == Command.ACK:
+                print(Print.timestamped(f"{Print.INFO} BOSS PIC receive ACK frame"))
+
+            elif frame_data.frame_id == Command.MIS_MCU_STATUS:
+                print(Print.timestamped(f"{Print.INFO} BOSS PIC receive MIS MCU Status frame"))
+                if not frame_data.frame_id:
+                    print(Print.timestamped(f"{Print.ERROR} データの取得に失敗しました。コマンド入力に戻ります。"))
                     break
-                
-                if not user_input:
-                    continue
-                
-                # コマンドをパース
-                uplink_command_payload = Command.input_payload(user_input)
-                uplink_command = Command.make_command(com.device_id, Command.UL_CMD, uplink_command_payload)
-                
-                # ミッション実行
-                print(f'{Print.INFO} コマンド実行開始...')
-                execute_mission(com, uplink_command)
-                print(f'{Print.INFO} コマンド実行完了')
-                
-            except KeyboardInterrupt:
-                print(f'\n{Print.INFO} ユーザーによって中断されました')
+
+                if frame_data.payload == Command.BUSY:
+                    print(Print.timestamped(f"\t-> Executing mission"))
+
+                elif frame_data.payload == Command.REQ_COPY_TO_SMF:
+                    print(Print.timestamped(f"\t-> Request copy to SMF"))
+                    com.respond_to_req()
+
+                elif frame_data.payload == Command.COPYING_TO_SMF:
+                    print(Print.timestamped(f"\t-> Copying data to SMF"))
+
+                elif frame_data.payload == Command.FINISHED_MISSION:
+                    print(Print.timestamped(f"\t-> Finished mission"))
+                    print(Print.timestamped(f"\t -> BOSS PIC power off MIS MCU "))
+                    break # ★ ミッション完了時も抜けて、コマンド入力に戻る
+            else:
+                print(Print.timestamped(f"{Print.ERROR} 未知のフレームを受信しました。コマンド入力に戻ります。"))
                 break
-            except Exception as e:
-                print(f'{Print.ERROR} エラーが発生しました: {str(e)}')
-                continue
-                
-    finally:
-        print(f'\n{Print.INFO} インタラクティブモードを終了します')
-        com.close()
 
-def execute_mission(com, uplink_command):
-    """ミッションを実行"""
-    print(Print.timestamped(f"{Print.INFO} BOSS PIC received uplink command"))
-    time.sleep(1)
-
-    response = com.transmit_and_receive_command(uplink_command)
-    
-    while True: # BOSS PIC start continuous communication whith MIS MCU
-        if not response:
-            print(Print.timestamped(f'{Print.ERROR} 応答がありません - ミッション中断'))
-            return False
-
-        frame_data = Command.parse_frame(response)
-        if frame_data.frame_id == Command.ACK:
-            print(Print.timestamped(f"{Print.INFO} BOSS PIC receive ACK frame"))
-
-        elif frame_data.frame_id == Command.MIS_MCU_STATUS:
-            print(Print.timestamped(f"{Print.INFO} BOSS PIC receive MIS MCU Status frame"))
-            if not frame_data.frame_id:
-                print(Print.timestamped(f'{Print.ERROR} ACKを受信できませんでした'))
-                return False
-
-            if frame_data.payload == Command.BUSY:
-                print(Print.timestamped(f"\t-> Executing mission"))
-
-            elif frame_data.payload == Command.REQ_COPY_TO_SMF:
-                print(Print.timestamped(f"\t-> Request copy to SMF"))
-                com.respond_to_req()
-
-            elif frame_data.payload == Command.COPYING_TO_SMF:
-                print(Print.timestamped(f"\t-> Copying data to SMF"))
-
-            elif frame_data.payload == Command.FINISHED_MISSION:
-                print(Print.timestamped(f"\t-> Finished mission"))
-                print(Print.timestamped(f"\t -> BOSS PIC power off MIS MCU "))
-                return True
-        else:
-            print(Print.timestamped(f'{Print.ERROR} 不明なフレームIDです'))
-            return False
-
-        time.sleep(1)
-        print(Print.timestamped(f"{Print.INFO} BOSS PIC switch CPLD rooting"))
-        print(Print.timestamped(f'\t-> Communicating other MIS MCU'), end='')
-        Print.wait(setting["wait_time"])
-        print(Print.timestamped(f"{Print.INFO} BOSS PIC switch CPLD rooting"))
-        print(Print.timestamped(f'\t-> Connection is to you'))
-        time.sleep(1)
-        status_check_command = Command.make_command(com.device_id, Command.STATUS_CHECK, b'')
-        response = com.transmit_and_receive_command(status_check_command)
+            time.sleep(1)
+            print(Print.timestamped(f"{Print.INFO} BOSS PIC switch CPLD rooting"))
+            print(Print.timestamped(f'\t-> Communicating other MIS MCU'), end='')
+            Print.wait(setting["wait_time"])
+            print(Print.timestamped(f"{Print.INFO} BOSS PIC switch CPLD rooting"))
+            print(Print.timestamped(f'\t-> Connection is to you'))
+            time.sleep(1)
+            status_check_command = Command.make_command(com.device_id, Command.STATUS_CHECK, b'')
+            response = com.transmit_and_receive_command(status_check_command)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='BOSS PIC Simulator')
-    parser.add_argument('--port', '-p', help='COM port (e.g., COM3)')
-    parser.add_argument('--baud', '-b', help='Baud rate (default: 9600)', default='9600')
-    parser.add_argument('--command', '-c', help='Command to send (9 bytes in hex, e.g., "01 00 00 00 00 00 00 00 00")')
-    
-    args = parser.parse_args()
-    
-    main(args.port, args.baud, args.command)
+    main()
