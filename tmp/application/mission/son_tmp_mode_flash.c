@@ -48,9 +48,6 @@ void permit_smf_transfer(void)
 
     cigs_smf_permit();
 
-    // 一連の転送シーケンスが完了したため、システム状態を IDLE に戻す
-    status = IDLE;
-
     fprintf(PC, "--- SMF Transfer Sequence Complete ---\r\n");
 }
 

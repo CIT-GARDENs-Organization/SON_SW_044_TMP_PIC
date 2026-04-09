@@ -2,11 +2,11 @@
 #include "../../../lib/device/mt25q.h"
 #include "../../../lib/tool/calc_tools.h"
 
-extern void erase_subsector(Flash flash_stream, uint32_t erase_address);
+// ★修正: 私が間違えて変更していた関数名を、元の正しい名前に戻しました
+extern void subsector_4kByte_erase(Flash flash_stream, uint32_t erase_address);
 
 // ============================================================================
 // データID定数の定義 (変数名との衝突を防ぐため ID_ を付与)
-// ※もし外部共通ヘッダで定義する場合はここは削除してください
 // ============================================================================
 #define ID_DATA_TABLE   0x00
 #define ID_PICLOG_DATA  0x01
@@ -31,9 +31,16 @@ void write_misf_address_area()
 
     data_table[PACKET_SIZE - 1] = calc_crc8(data_table, PACKET_SIZE - 1);
 
-    // ★修正: subsector_4kByte_erase ではなく erase_subsector を使用する
+    // ★修正: 正しい関数名を使用
     subsector_4kByte_erase(mis_fm, MISF_TMP_DATA_TABLE_START);
+
+    // 消去完了を確実に待つ
+    delay_ms(100);
+
     write_data_bytes(mis_fm, MISF_TMP_DATA_TABLE_START, (int8*)data_table, PACKET_SIZE);
+
+    // 書き込み完了も念のため待つ
+    delay_ms(10);
 }
 
 // ----------------------------------------------------
@@ -46,9 +53,9 @@ void misf_init()
     fprintf(PC, "MISSION FLASH Initialize\r\n");
 
     // 起動直後に「全ての」SPIデバイスを沈黙させる
-    output_high(PIN_CS_ADC);   // LTC2452 のCSをHigh
-    output_high(MIS_FM_CS);    // Flash のCSをHigh
-    output_high(SMF_CS);       // SMF のCSをHigh
+    output_high(PIN_CS_ADC);
+    output_high(MIS_FM_CS);
+    output_high(SMF_CS);
     delay_ms(100);
 
     // デバイスの接続確認
@@ -73,24 +80,29 @@ void misf_init()
     // Flashから管理情報を読み出す
     read_data_bytes(mis_fm, MISF_TMP_DATA_TABLE_START, (int8*)data_table, PACKET_SIZE);
 
-    // CRCチェックを行い、正常なら変数に展開する
-    if (is_crc_valid(data_table, PACKET_SIZE - 1))
+    // 手動で確実にCRC8を計算して比較する
+    uint8_t computed_crc = calc_crc8(data_table, PACKET_SIZE - 1);
+    uint8_t read_crc = data_table[PACKET_SIZE - 1];
+
+    if (computed_crc == read_crc && data_table[0] == ID_PICLOG_DATA)
     {
         memcpy(&piclog_data, &data_table[0],               sizeof(Flash_t));
         memcpy(&str_data,    &data_table[sizeof(Flash_t)], sizeof(Flash_t));
 
-        fprintf(PC, "\tData table loaded from Flash.\r\n");
+        fprintf(PC, "\tData table loaded successfully.\r\n");
+        fprintf(PC, "\t[STR DATA] Used Counter: %lu\r\n", str_data.used_counter);
     }
     else
     {
-        // 異常な場合(真っ白な場合も含む)はリセット(全ゼロ)
-        fprintf(PC, "\t[WARN] MISF Data Table CRC Error or Empty! Initializing counters.\r\n");
+        fprintf(PC, "\t[WARN] MISF Data Table CRC Error or Empty!\r\n");
+        fprintf(PC, "\tRead CRC: %02X, Computed CRC: %02X, FirstByte: %02X\r\n", read_crc, computed_crc, data_table[0]);
 
         // 変数をゼロリセット
         piclog_data.used_counter = 0;
         piclog_data.uncopied_counter = 0;
         str_data.used_counter = 0;
         str_data.uncopied_counter = 0;
+
         write_misf_address_area();
     }
 
@@ -139,6 +151,7 @@ MisfWriteStruct get_misf_write_struct(uint8_t mission_id)
         mis_write_struct.start_address = MISF_TMP_STR_DATA_START + str_data.used_counter - str_data.uncopied_counter;
         mis_write_struct.size = str_data.uncopied_counter;
     }
+
     return mis_write_struct;
 }
 

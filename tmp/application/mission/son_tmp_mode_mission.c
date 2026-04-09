@@ -33,9 +33,5 @@ void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate, uint8_t 
 
     piclog_make(0x12, 0x00);
 
-    // ★オリジナルの思想通り、終わったらステータスを FINISHED(完了)に変更する
-    // (BOSSから STATUS_CHECK が来た時にこれを返すため)
-    status = FINISHED;
-
     fprintf(PC, "--- Mission Sequence Complete ---\r\n");
 }

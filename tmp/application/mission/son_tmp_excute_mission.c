@@ -200,6 +200,8 @@ int1 execute_command(Command* cmd)
                 break;
             }
         }
+        
+        status = FINISHED;
     }
     // ----------------------------------------------------
     // ② BOSSからの「状態確認 (STATUS_CHECK)」の場合
