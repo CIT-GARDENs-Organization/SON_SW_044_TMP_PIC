@@ -174,7 +174,7 @@ void execute_measurement(uint8_t mode, uint8_t samplingRate)
         // mode 03ではFlashに書き込まず、そのまま読み出す
         if (mode == 0x03)
         {
-            fprintf(PC, "[PRINT] Step:%lu, Temp:0x%03X, STR1:0x%04X, STR2:0x%04X\r\n",step, temp_val, strain1, strain2);
+            fprintf(PC, "[PRINT] Step:%lu, Temp:%lu, STR1:%lu, STR2:%lu\r\n",step, temp_val, strain1, strain2);
         }
 
         // [B] 6Byteデータ塊のパッキング
