@@ -65,9 +65,15 @@ void check_boss_status_polling(void)
 
             if (rx_state == expected_len)
             {
-                if (current_frame_id == 0x01 || current_frame_id == 0x03)
+                // ★修正: ポーリング中の通信ログを詳細で分かりやすいものに改善しました
+                if (current_frame_id == 0x01)
                 {
-                    fprintf(PC, "\r\n[INFO] STATUS/SYNC Received during operation. Sending Status...\r\n");
+                    fprintf(PC, "\r\n[INFO] STATUS_CHECK(0x01) Received during operation. Replying status: %u\r\n", status);
+                    transmit_status();
+                }
+                else if (current_frame_id == 0x03)
+                {
+                    fprintf(PC, "\r\n[INFO] TIME_SYNC(0x03) Received during operation. Replying status: %u\r\n", status);
                     transmit_status();
                 }
                 else if (current_frame_id == 0x00 && is_mission_aborted)

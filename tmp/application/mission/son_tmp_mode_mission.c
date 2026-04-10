@@ -6,28 +6,28 @@
 // ============================================================================
 // ログ表示用のヘルパー関数
 // ============================================================================
-const char* get_sampling_rate_str(uint8_t rate) {
+void print_sampling_rate(uint8_t rate) {
     switch(rate) {
-        case 0x01: return "10ms";
-        case 0x02: return "50ms";
-        case 0x03: return "100ms";
-        case 0x04: return "500ms";
-        case 0x05: return "1000ms";
-        case 0x06: return "5000ms";
-        case 0x07: return "2432ms";
-        case 0x08: return "4865ms";
-        case 0x09: return "9730ms";
-        default:   return "Unknown";
+        case 0x01: fprintf(PC, "10ms"); break;
+        case 0x02: fprintf(PC, "50ms"); break;
+        case 0x03: fprintf(PC, "100ms"); break;
+        case 0x04: fprintf(PC, "500ms"); break;
+        case 0x05: fprintf(PC, "1000ms"); break;
+        case 0x06: fprintf(PC, "5000ms"); break;
+        case 0x07: fprintf(PC, "2432ms"); break;
+        case 0x08: fprintf(PC, "4865ms"); break;
+        case 0x09: fprintf(PC, "9730ms"); break;
+        default:   fprintf(PC, "Unknown(0x%02X)", rate); break;
     }
 }
 
-const char* get_mode_str(uint8_t mode) {
+void print_mode(uint8_t mode) {
     switch(mode) {
-        case 0x01: return "SAVE (A0)";
-        case 0x02: return "DEBUG_DUMP (A1)";
-        case 0x03: return "PRINT_ONLY (A2)";
-        case 0x04: return "DEBUG_SAVE (A3)";
-        default:   return "Unknown";
+        case 0x01: fprintf(PC, "SAVE(A0)"); break;
+        case 0x02: fprintf(PC, "DEBUG_DUMP(A1)"); break;
+        case 0x03: fprintf(PC, "PRINT_ONLY(A2)"); break;
+        case 0x04: fprintf(PC, "DEBUG_SAVE(A3)"); break;
+        default:   fprintf(PC, "Unknown(0x%02X)", mode); break;
     }
 }
 
@@ -48,12 +48,12 @@ void execute_mission_sequence(uint8_t samplingRate, uint8_t mode)
 
     piclog_make(0x11, 0x00);
 
-    // パケットヘッダーの互換性維持用に hw_channel は 0 固定とします。
-    uint8_t hw_channel = 0;
-
-        fprintf(PC, "Executing Target -> Fixed CH1 & CH2, SamplingRate: %s, Mode: %s\r\n",
-            get_sampling_rate_str(samplingRate),
-            get_mode_str(mode));
+    // ポインタエラーを防ぐため、直接print関数を呼び出して出力をつなげます
+    fprintf(PC, "Executing Target -> Fixed CH1 & CH2, SamplingRate: ");
+    print_sampling_rate(samplingRate);
+    fprintf(PC, ", Mode: ");
+    print_mode(mode);
+    fprintf(PC, "\r\n");
 
 
     // 計測処理を呼び出し (この中で mode に応じた分岐が行われます)
