@@ -56,6 +56,13 @@ int1 execute_command(Command* cmd)
                 execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x03);
                 break;
             }
+            case CMD_STR_DEBUG_SAVE:
+            {
+                fprintf(PC, "[CMD] STR_DEBUG_SAVE (0xA3)\r\n");
+                status = EXECUTING_MISSION;
+                execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x04);
+                break;
+            }
 
             // ----------------------------------------------------
             // PICF (Mission Flash) コマンド

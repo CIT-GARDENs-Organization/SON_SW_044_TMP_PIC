@@ -87,21 +87,19 @@ void check_boss_status_polling(void)
     static uint8_t rx_state = 0;
     static uint8_t expected_len = 0;
 
-    // 受信箱にデータがある限り読み出し続ける（溢れ防止）
     while (kbhit(BOSS))
     {
         uint8_t c = fgetc(BOSS);
 
-        // AA A1 (3バイト) または AA A3 (7バイト) の並びを探す
         if (rx_state == 0 && c == 0xAA) {
             rx_state = 1;
         }
         else if (rx_state == 1) {
-            if (c == 0xA1 || c == 0xC1) {      // STATUS_CHECK (旧C1/新A1)
+            if (c == 0xA1 || c == 0xC1) {
                 expected_len = 3;
                 rx_state = 2;
             }
-            else if (c == 0xA3 || c == 0xC3) { // TIME_SYNC/STATUS (旧C3/新A3)
+            else if (c == 0xA3 || c == 0xC3) {
                 expected_len = 7;
                 rx_state = 2;
             }
@@ -110,13 +108,12 @@ void check_boss_status_polling(void)
             }
         }
         else if (rx_state >= 2) {
-            rx_state++; // ペイロードとCRCを読み飛ばす
+            rx_state++;
 
-            // 期待する長さに達したら受信完了として扱う
             if (rx_state == expected_len) {
                 fprintf(PC, "\r\n[INFO] STATUS/SYNC Received during measurement. Sending Status...\r\n");
-                transmit_status(); // 生存通知を返す
-                rx_state = 0;      // 状態リセット
+                transmit_status();
+                rx_state = 0;
             }
         }
     }
@@ -127,14 +124,12 @@ void check_boss_status_polling(void)
 // ============================================================================
 void delay_ms_with_polling(uint16_t ms)
 {
-    // 1ms待つごとに受信箱を確認し、合計 ms ミリ秒待機する
     for (uint16_t i = 0; i < ms; i++)
     {
         delay_ms(1);
         check_boss_status_polling();
     }
 }
-
 
 // ============================================================================
 // 計測シーケンスとFlash保存処理
@@ -177,7 +172,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     // 2. メインサンプリングループ
     for (uint16_t step = 0; step < data_count; step++)
     {
-        // [A.5] 測定開始前にも一度チラ見する
+        // 測定開始前にも一度チラ見する
         check_boss_status_polling();
 
         // [A] データの読み取り
@@ -190,6 +185,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
 
         uint16_t strain2 = read_adc_ltc2452();
 
+        // CMD_STR_PRINT (0xA2) の場合は、シリアル出力するだけ
         if (mode == 0x03)
         {
             fprintf(PC, "[PRINT] Step:%lu, Temp:0x%03X, STR1:0x%04X, STR2:0x%04X\r\n",
@@ -217,7 +213,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
             packet_buffer[62] = (crc24 >> 8) & 0xFF;
             packet_buffer[63] = crc24 & 0xFF;
 
-            if (mode == 0x01)
+            // ★修正: mode 0x01(保存のみ) と 0x04(保存+ダンプ) でFlashへ書き込み
+            if (mode == 0x01 || mode == 0x04)
             {
                 uint32_t flash_addr = MISF_TMP_STR_DATA_START + str_data.used_counter;
                 write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
@@ -225,7 +222,9 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
                 str_data.used_counter += PACKET_SIZE;
                 str_data.uncopied_counter += PACKET_SIZE;
             }
-            else if (mode == 0x02)
+
+            // ★修正: mode 0x02(ダンプのみ) と 0x04(保存+ダンプ) でシリアルダンプ出力
+            if (mode == 0x02 || mode == 0x04)
             {
                 fprintf(PC, "[DEBUG] Packet %lu: ", packet_num);
                 for (uint8_t i = 0; i < PACKET_SIZE; i++)
@@ -243,7 +242,6 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         }
 
         // [D] サンプリングレートに応じたウェイト
-        // ★修正: ただの delay_ms ではなく、チラ見付きのカスタム待機関数を使う
         switch (samplingRate)
         {
             case SAMP_RATE_10MS:   delay_ms_with_polling(10);   break;
@@ -264,7 +262,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         packet_buffer[62] = (crc24 >> 8) & 0xFF;
         packet_buffer[63] = crc24 & 0xFF;
 
-        if (mode == 0x01)
+        // ★修正: 端数の処理も独立したif文に変更
+        if (mode == 0x01 || mode == 0x04)
         {
             uint32_t flash_addr = MISF_TMP_STR_DATA_START + str_data.used_counter;
             write_data_bytes(mis_fm, flash_addr, (int8*)packet_buffer, PACKET_SIZE);
@@ -272,7 +271,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
             str_data.used_counter += PACKET_SIZE;
             str_data.uncopied_counter += PACKET_SIZE;
         }
-        else if (mode == 0x02)
+
+        if (mode == 0x02 || mode == 0x04)
         {
             fprintf(PC, "[DEBUG] Packet %lu (Fraction): ", packet_num);
             for (uint8_t i = 0; i < PACKET_SIZE; i++)
@@ -283,7 +283,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         }
     }
 
-    if (mode == 0x01)
+    // Flashのアドレス管理領域を一度だけセーブ (保存モードの場合のみ)
+    if (mode == 0x01 || mode == 0x04)
     {
         write_misf_address_area();
     }
