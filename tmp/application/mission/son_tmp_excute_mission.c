@@ -12,6 +12,74 @@
 // ============================================================================
 unsigned int8 status = 0; // 初期状態(IDLE等)
 int1 is_use_smf_req_in_mission = 0;
+bool is_mission_aborted = false;
+
+// ============================================================================
+// グローバルなポーリング監視用関数
+// ============================================================================
+void check_boss_status_polling(void)
+{
+    static uint8_t rx_state = 0;
+    static uint8_t expected_len = 0;
+    static uint8_t current_frame_id = 0;
+
+    while (kbhit(BOSS))
+    {
+        uint8_t c = fgetc(BOSS);
+
+        if (rx_state == 0 && c == 0xAA)
+        {
+            rx_state = 1;
+        }
+        else if (rx_state == 1)
+        {
+            current_frame_id = c & 0x0F;
+            if (c == 0xA1 || c == 0xC1)
+            {
+                expected_len = 3;
+                rx_state = 2;
+            }
+            else if (c == 0xA3 || c == 0xC3)
+            {
+                expected_len = 7;
+                rx_state = 2;
+            }
+            else if (c == 0xA0 || c == 0xC0)
+            {
+                expected_len = 12;
+                rx_state = 2;
+            }
+            else
+            {
+                rx_state = (c == 0xAA) ? 1 : 0;
+            }
+        }
+        else if (rx_state >= 2)
+        {
+            if (rx_state == 2 && current_frame_id == 0x00 && c == 0xAF)
+            {
+                is_mission_aborted = true;
+            }
+
+            rx_state++;
+
+            if (rx_state == expected_len)
+            {
+                if (current_frame_id == 0x01 || current_frame_id == 0x03)
+                {
+                    fprintf(PC, "\r\n[INFO] STATUS/SYNC Received during operation. Sending Status...\r\n");
+                    transmit_status();
+                }
+                else if (current_frame_id == 0x00 && is_mission_aborted)
+                {
+                    fprintf(PC, "\r\n[WARN] ABORT Command Received during operation!\r\n");
+                    transmit_ack();
+                }
+                rx_state = 0;
+            }
+        }
+    }
+}
 
 int1 execute_command(Command* cmd)
 {
@@ -39,28 +107,36 @@ int1 execute_command(Command* cmd)
             {
                 fprintf(PC, "[CMD] STR (0xA0)\r\n");
                 status = EXECUTING_MISSION;
-                execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x01);
+                execute_mission_sequence((uint8_t)cmd->content[2], 0x01);
                 break;
             }
             case CMD_STR_DEBUG:
             {
                 fprintf(PC, "[CMD] STR_DEBUG (0xA1)\r\n");
                 status = EXECUTING_MISSION;
-                execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x02);
+                execute_mission_sequence((uint8_t)cmd->content[2], 0x02);
                 break;
             }
             case CMD_STR_PRINT:
             {
                 fprintf(PC, "[CMD] STR_PRINT (0xA2)\r\n");
                 status = EXECUTING_MISSION;
-                execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x03);
+                execute_mission_sequence((uint8_t)cmd->content[2], 0x03);
                 break;
             }
             case CMD_STR_DEBUG_SAVE:
             {
                 fprintf(PC, "[CMD] STR_DEBUG_SAVE (0xA3)\r\n");
                 status = EXECUTING_MISSION;
-                execute_mission_sequence((uint8_t)cmd->content[1], (uint8_t)cmd->content[2], 0x04);
+                execute_mission_sequence((uint8_t)cmd->content[2], 0x04);
+                break;
+            }
+            // ★追加: 中断コマンドが待機中(IDLE)に送られてきた場合の対応
+            case CMD_MISSION_ABORT:
+            {
+                fprintf(PC, "[CMD] MISSION_ABORT (0xAF)\r\n");
+                is_mission_aborted = true;
+                fprintf(PC, "Mission Aborted by Boss.\r\n");
                 break;
             }
 

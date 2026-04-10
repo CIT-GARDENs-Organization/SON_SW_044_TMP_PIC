@@ -87,6 +87,7 @@
 #define CMD_STR_DEBUG                0xA1
 #define CMD_STR_PRINT                0xA2
 #define CMD_STR_DEBUG_SAVE           0xA3
+#define CMD_MISSION_ABORT            0xAF
 
 // --- その他 ---
 #define CMD_RETURN_TIME              0xB0

@@ -10,6 +10,6 @@
 // ============================================================================
 
 // ミッションの全体シーケンスを実行する
-void execute_mission_sequence(uint8_t rx_channel, uint8_t samplingRate, uint8_t mode);
+void execute_mission_sequence(uint8_t samplingRate, uint8_t mode);
 
 #endif // son_tmp_MODE_MISSION_H

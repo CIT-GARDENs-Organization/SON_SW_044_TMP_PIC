@@ -7,6 +7,12 @@
 #include "../../../lib/tool/calc_tools.h"
 #include "../../../lib/device/mt25q.h"
 
+// グローバルの中断フラグを参照
+extern bool is_mission_aborted;
+
+// ポーリング監視を外部から参照
+extern void check_boss_status_polling(void);
+
 // ============================================================================
 // ハードウェア・ペリフェラル制御
 // ============================================================================
@@ -80,52 +86,17 @@ uint16_t read_adc_ltc2452()
 }
 
 // ============================================================================
-// ポーリング監視用関数 (UARTバッファからデータを拾う)
-// ============================================================================
-void check_boss_status_polling(void)
-{
-    static uint8_t rx_state = 0;
-    static uint8_t expected_len = 0;
-
-    while (kbhit(BOSS))
-    {
-        uint8_t c = fgetc(BOSS);
-
-        if (rx_state == 0 && c == 0xAA) {
-            rx_state = 1;
-        }
-        else if (rx_state == 1) {
-            if (c == 0xA1 || c == 0xC1) {
-                expected_len = 3;
-                rx_state = 2;
-            }
-            else if (c == 0xA3 || c == 0xC3) {
-                expected_len = 7;
-                rx_state = 2;
-            }
-            else {
-                rx_state = (c == 0xAA) ? 1 : 0;
-            }
-        }
-        else if (rx_state >= 2) {
-            rx_state++;
-
-            if (rx_state == expected_len) {
-                fprintf(PC, "\r\n[INFO] STATUS/SYNC Received during measurement. Sending Status...\r\n");
-                transmit_status();
-                rx_state = 0;
-            }
-        }
-    }
-}
-
-// ============================================================================
 // チラ見機能付きの待機関数 (バッファ溢れ防止)
 // ============================================================================
 void delay_ms_with_polling(uint16_t ms)
 {
     for (uint16_t i = 0; i < ms; i++)
     {
+        if (is_mission_aborted)
+        {
+            break;
+        }
+
         delay_ms(1);
         check_boss_status_polling();
     }
@@ -134,9 +105,9 @@ void delay_ms_with_polling(uint16_t ms)
 // ============================================================================
 // 計測シーケンスとFlash保存処理
 // ============================================================================
-void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
+void execute_measurement(uint8_t mode, uint8_t samplingRate)
 {
-    fprintf(PC, "Start Synchronized Measurement (Mode:0x%02X, HW_Ch:%u)\r\n", mode, hw_channel);
+    fprintf(PC, "Start Synchronized Measurement (Mode:0x%02X)\r\n", mode);
 
     temp_io_init();
     delay_ms(10);
@@ -163,7 +134,8 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     packet_buffer[1] = (ts >> 16) & 0xFF;
     packet_buffer[2] = (ts >> 8) & 0xFF;
     packet_buffer[3] = ts & 0xFF;
-    packet_buffer[4] = ((mode & 0x07) << 5) | ((hw_channel & 0x01) << 4) | (samplingRate & 0x0F);
+    // チャンネル指定部分はパケット構造互換性のため 0x00 を固定で埋め込みます
+    packet_buffer[4] = ((mode & 0x07) << 5) | (0x00 << 4) | (samplingRate & 0x0F);
     packet_buffer[5] = (data_count >> 4) & 0xFF;
     packet_buffer[6] = ((data_count & 0x0F) << 4) | 0x00;
 
@@ -172,24 +144,37 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
     // 2. メインサンプリングループ
     for (uint16_t step = 0; step < data_count; step++)
     {
-        // 測定開始前にも一度チラ見する
+
+        // 中断コマンドがあれば直ちにループを抜ける
+        if (is_mission_aborted)
+        {
+            fprintf(PC, "\r\n{INFO] Measurement aborted at step %lu\r\n", step);
+            break;
+        }
+
+
+        // 測定開始前にBOSSから何か来てないか確認する
         check_boss_status_polling();
 
-        // [A] データの読み取り
+        // ----------------------------------------------------
+        // [A] データの読み取り (CH1/CH2 固定)
+        // ----------------------------------------------------
         uint16_t temp_val = read_adc_internal();
 
+        // CH1 (HW_CH: 0) に切り替えてひずみ1を読む
+        switch_channel(0);
+        delay_us(10);
         uint16_t strain1 = read_adc_ltc2452();
 
-        switch_channel(hw_channel);
+        //  CH2 (HW_CH: 1) に切り替えてひずみ2を読む
+        switch_channel(1);
         delay_us(10);
-
         uint16_t strain2 = read_adc_ltc2452();
 
-        // CMD_STR_PRINT (0xA2) の場合は、シリアル出力するだけ
+        // mode 03ではFlashに書き込まず、そのまま読み出す
         if (mode == 0x03)
         {
-            fprintf(PC, "[PRINT] Step:%lu, Temp:0x%03X, STR1:0x%04X, STR2:0x%04X\r\n",
-                    step, temp_val, strain1, strain2);
+            fprintf(PC, "[PRINT] Step:%lu, Temp:0x%03X, STR1:0x%04X, STR2:0x%04X\r\n",step, temp_val, strain1, strain2);
         }
 
         // [B] 6Byteデータ塊のパッキング
@@ -213,7 +198,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
             packet_buffer[62] = (crc24 >> 8) & 0xFF;
             packet_buffer[63] = crc24 & 0xFF;
 
-            // ★修正: mode 0x01(保存のみ) と 0x04(保存+ダンプ) でFlashへ書き込み
+            // mode 0x01(保存のみ) と 0x04(保存+ダンプ) でFlashへ書き込み
             if (mode == 0x01 || mode == 0x04)
             {
                 uint32_t flash_addr = MISF_TMP_STR_DATA_START + str_data.used_counter;
@@ -223,7 +208,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
                 str_data.uncopied_counter += PACKET_SIZE;
             }
 
-            // ★修正: mode 0x02(ダンプのみ) と 0x04(保存+ダンプ) でシリアルダンプ出力
+            // mode 0x02(ダンプのみ) と 0x04(保存+ダンプ) でシリアルダンプ出力
             if (mode == 0x02 || mode == 0x04)
             {
                 fprintf(PC, "[DEBUG] Packet %lu: ", packet_num);
@@ -250,6 +235,9 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
             case SAMP_RATE_500MS:  delay_ms_with_polling(500);  break;
             case SAMP_RATE_1000MS: delay_ms_with_polling(1000); break;
             case SAMP_RATE_5000MS: delay_ms_with_polling(5000); break;
+            case SAMP_RATE_2432MS: delay_ms_with_polling(2432); break;
+            case SAMP_RATE_4865MS: delay_ms_with_polling(4865); break;
+            case SAMP_RATE_9730MS: delay_ms_with_polling(9730); break;
             default:               delay_ms_with_polling(10);   break;
         }
     }
@@ -262,7 +250,7 @@ void execute_measurement(uint8_t mode, uint8_t hw_channel, uint8_t samplingRate)
         packet_buffer[62] = (crc24 >> 8) & 0xFF;
         packet_buffer[63] = crc24 & 0xFF;
 
-        // ★修正: 端数の処理も独立したif文に変更
+        // 端数の処理も独立したif文に変更
         if (mode == 0x01 || mode == 0x04)
         {
             uint32_t flash_addr = MISF_TMP_STR_DATA_START + str_data.used_counter;

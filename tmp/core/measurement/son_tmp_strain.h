@@ -22,6 +22,6 @@ uint16_t read_adc_ltc2452(void);
 // mode: 動作モード
 // channel: 測定チャンネル (MAX4734EUB+ の選択)
 // samplingRate: サンプリングレート設定値
-void execute_measurement(uint8_t mode, uint8_t channel, uint8_t samplingRate);
+void execute_measurement(uint8_t mode, uint8_t samplingRate);
 
 #endif // son_tmp_strain_H

@@ -1,0 +1,73 @@
+MIS Flash
+
+ERASE ALL
+80 00 00 00 00 00 00 00 00
+
+ERASE 1SECTOR
+81 __ __ __ __ 00 00 __ 00
+
+ERASE 4KBYTE SUBSECTOR
+82 __ __ __ __ 00 00 __ 00
+
+ERASE 64KBYTE SUBSECTOR
+83 __ __ __ __ 00 00 __ 00
+
+WRITE DEMO
+84 __ __ __ __ 00 __ __ 00
+
+WRITE 4KBYTE SUBSECTOR
+85 __ __ __ __ 00 00 00 00
+
+READ
+86 __ __ __ __ 00 __ __ 00
+
+READ ADDRESS
+87 00 00 00 00 00 00 00 00
+
+READ AREA
+89 __ __ __ 00 00 00 00 00
+
+---
+
+SMF
+
+COPY
+90 __ __ __ __ 00 __ __ 00
+
+READ
+91 __ __ __ __ 00 __ __ 00
+
+ERASE
+92 __ __ __ __ 00 00 __ 00
+
+COPY FORCE
+93 __ __ __ __ 00 __ __ 00
+
+READ FORECE
+94 __ __ __ __ 00 __ __ 00
+
+ERACE FORCE
+95 00 00 00 00 00 00 00 00
+
+---
+
+MEASURE
+
+STR
+A0 __ __ 00 00 00 00 00 00
+
+STR DEBUG
+A1 __ __ 00 00 00 00 00 00
+
+STR PRINT
+A2 __ __ 00 00 00 00 00 00
+
+STR SAVE AND DEBUG
+A3 __ __ 00 00 00 00 00 00
+
+---
+
+TEST
+
+RETURN TIME
+B0 00 00 00 00 00 00 00 00
