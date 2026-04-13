@@ -32,7 +32,7 @@ void execute_picf_write_demo(uint32_t start_address, uint16_t packet_num);
 void execute_picf_erase_all(void);
 void execute_picf_write_4k(uint32_t start_address);
 void execute_picf_erase_and_reset(void);
-void execute_picf_read_area(uint8_t area, uint8_t start_packet, uint8_t request_packet);
+void execute_picf_read_area(uint8_t area, uint16_t start_packet, uint16_t request_packet);
 
 // SMF関連コマンド実行関数
 void execute_smf_direct_copy(uint32_t address, uint16_t packet_num, bool is_force);

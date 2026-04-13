@@ -9,7 +9,6 @@
 extern Flash mis_fm;
 extern Flash smf;
 
-// ★追加: 外部にある通信確認機能とアボートフラグを参照する
 extern void check_boss_status_polling(void);
 extern void delay_ms_with_polling(uint16_t ms);
 extern bool is_mission_aborted;
@@ -57,24 +56,20 @@ void execute_flash_dump(void)
 
     fprintf(PC, "\r\n--- Flash Data Dump Start ---\r\n");
 
-    is_mission_aborted = false; // ★追加: 実行前にフラグをクリア
+    is_mission_aborted = false;
 
     for (p_num = 1; p_num <= 32; p_num++)
     {
-        // ★追加: アボート(強制停止)指令が来ていないかチェック
         if (is_mission_aborted) {
             fprintf(PC, "\r\n[WARN] Flash Dump Aborted by Boss.\r\n");
             break;
         }
 
-        // 1. アドレス計算
         flash_addr = (unsigned int32)(p_num - 1);
         flash_addr *= r_len;
 
-        // 2. 読み出し
         read_data_bytes(mis_fm, flash_addr, p_dst, r_len);
 
-        // 3. アドレス分解
         unsigned int8 a3 = (unsigned int8)((flash_addr >> 24) & 0xFF);
         unsigned int8 a2 = (unsigned int8)((flash_addr >> 16) & 0xFF);
         unsigned int8 a1 = (unsigned int8)((flash_addr >> 8)  & 0xFF);
@@ -96,7 +91,6 @@ void execute_flash_dump(void)
         }
         fprintf(PC, "\r\n------------------------------------------------------------\r\n");
 
-        // ★修正: 通信を拾える待機関数に変更
         delay_ms_with_polling(10);
     }
 
@@ -159,7 +153,7 @@ void execute_picf_read(uint32_t start_address, uint16_t packet_num)
         fprintf(PC, "\r\n");
 
         current_addr += PACKET_SIZE;
-        delay_ms_with_polling(5); // ★修正: 通信を拾える待機
+        delay_ms_with_polling(5);
     }
     fprintf(PC, "--- PICF Read Complete ---\r\n");
 }
@@ -186,7 +180,6 @@ void execute_picf_erase_4k(uint32_t start_address, uint8_t sector_num)
         fprintf(PC, "Erased Addr: 0x%08LX\r\n", current_addr);
         current_addr += 4096;
 
-        // ★追加: 1セクタ消去するごとに通信をチェック
         check_boss_status_polling();
     }
     fprintf(PC, "--- Erase Complete ---\r\n");
@@ -214,7 +207,7 @@ void execute_picf_erase_1sector(uint32_t start_address, uint8_t sector_num)
         fprintf(PC, "Erased Addr: 0x%08LX\r\n", current_addr);
         current_addr += 65536;
 
-        check_boss_status_polling(); // ★追加
+        check_boss_status_polling();
     }
     fprintf(PC, "--- Erase Complete ---\r\n");
 }
@@ -241,7 +234,7 @@ void execute_picf_erase_32k(uint32_t start_address, uint8_t sector_num)
         fprintf(PC, "Erased Addr: 0x%08LX\r\n", current_addr);
         current_addr += 32768;
 
-        check_boss_status_polling(); // ★追加
+        check_boss_status_polling();
     }
     fprintf(PC, "--- Erase Complete ---\r\n");
 }
@@ -273,7 +266,7 @@ void execute_picf_write_demo(uint32_t start_address, uint16_t packet_num)
         fprintf(PC, "Wrote Demo Packet [%lu] to Addr: 0x%08LX\r\n", (uint32_t)(p+1), current_addr);
         current_addr += PACKET_SIZE;
 
-        delay_ms_with_polling(5); // ★修正
+        delay_ms_with_polling(5);
     }
     fprintf(PC, "--- PICF Write Complete ---\r\n");
 }
@@ -302,7 +295,7 @@ void execute_picf_erase_all(void)
         }
         current_addr += 65536;
 
-        check_boss_status_polling(); // ★追加
+        check_boss_status_polling();
     }
     fprintf(PC, "--- Erase All Complete ---\r\n");
 }
@@ -333,7 +326,7 @@ void execute_picf_write_4k(uint32_t start_address)
         current_addr += PACKET_SIZE;
 
         delay_us(500);
-        check_boss_status_polling(); // ★追加
+        check_boss_status_polling();
     }
     fprintf(PC, "--- Write 4K Complete ---\r\n");
 }
@@ -347,7 +340,6 @@ void execute_picf_erase_and_reset(void)
 
     execute_picf_erase_all();
 
-    // 全消去がアボートされていなければリセットも実行
     if (!is_mission_aborted) {
         execute_picf_reset_address();
         fprintf(PC, "[PICF] Erase And Reset Sequence Complete\r\n");
@@ -357,10 +349,11 @@ void execute_picf_erase_and_reset(void)
 // ----------------------------------------------------
 // PICF: エリア指定での読み出し (0x89)
 // ----------------------------------------------------
-void execute_picf_read_area(uint8_t area, uint8_t start_packet, uint8_t request_packet)
+// ★修正: 引数を uint16_t に拡張しました (最大 65,535パケット指定可能)
+void execute_picf_read_area(uint8_t area, uint16_t start_packet, uint16_t request_packet)
 {
     fprintf(PC, "\r\n--- PICF Read Area ---\r\n");
-    fprintf(PC, "Area ID: 0x%02X, Start Packet: %u, Request Packets: %u\r\n", area, start_packet, request_packet);
+    fprintf(PC, "Area ID: 0x%02X, Start Packet: %lu, Request Packets: %lu\r\n", area, (uint32_t)start_packet, (uint32_t)request_packet);
 
     MisfStatusStruct area_info = get_misf_status_struct(area);
 
@@ -371,7 +364,7 @@ void execute_picf_read_area(uint8_t area, uint8_t start_packet, uint8_t request_
     }
 
     uint32_t start_address = area_info.start_address + ((uint32_t)start_packet * PACKET_SIZE);
-    execute_picf_read(start_address, (uint16_t)request_packet);
+    execute_picf_read(start_address, request_packet);
 }
 
 // ----------------------------------------------------
@@ -379,18 +372,18 @@ void execute_picf_read_area(uint8_t area, uint8_t start_packet, uint8_t request_
 // ----------------------------------------------------
 uint32_t calculate_smf_write_address(uint32_t picf_address)
 {
-    const uint32_t DUMMY_SMF_STR_DATA_START = 0x00100000;
-    const uint32_t DUMMY_SMF_PICLOG_START   = 0x00200000;
+    const uint32_t SMF_TMP_STR_DATA_START = 0x04DA1000;
+    const uint32_t SMF_TMP_PICLOG_START   = 0x04DC2000;
 
     if (picf_address >= MISF_TMP_STR_DATA_START && picf_address <= MISF_TMP_STR_DATA_END)
     {
         uint32_t offset = picf_address - MISF_TMP_STR_DATA_START;
-        return DUMMY_SMF_STR_DATA_START + offset;
+        return SMF_TMP_STR_DATA_START + offset;
     }
     else if (picf_address >= MISF_TMP_PICLOG_START && picf_address <= MISF_TMP_PICLOG_END)
     {
         uint32_t offset = picf_address - MISF_TMP_PICLOG_START;
-        return DUMMY_SMF_PICLOG_START + offset;
+        return SMF_TMP_PICLOG_START + offset;
     }
 
     return picf_address;
@@ -427,7 +420,7 @@ void execute_smf_direct_copy(uint32_t address, uint16_t packet_num, bool is_forc
         read_addr += PACKET_SIZE;
         write_addr += PACKET_SIZE;
 
-        delay_ms_with_polling(5); // ★修正
+        delay_ms_with_polling(5);
     }
     fprintf(PC, "--- SMF Copy Complete ---\r\n");
 }
@@ -462,7 +455,7 @@ void execute_smf_read(uint32_t address, uint16_t packet_num, bool is_force)
         fprintf(PC, "\r\n");
 
         current_addr += PACKET_SIZE;
-        delay_ms_with_polling(5); // ★修正
+        delay_ms_with_polling(5);
     }
     fprintf(PC, "--- SMF Read Complete ---\r\n");
 }
@@ -489,7 +482,7 @@ void execute_smf_erase(uint32_t address, uint8_t sector_num, bool is_force)
         fprintf(PC, "Erased Addr: 0x%08LX\r\n", current_addr);
         current_addr += 65536;
 
-        check_boss_status_polling(); // ★追加
+        check_boss_status_polling();
     }
     fprintf(PC, "--- Erase Complete ---\r\n");
 }
@@ -500,24 +493,5 @@ void execute_smf_erase(uint32_t address, uint8_t sector_num, bool is_force)
 void execute_smf_erase_force(void)
 {
     fprintf(PC, "\r\n--- SMF Erase Force (Fixed Area) ---\r\n");
-
-    /*
-    is_mission_aborted = false;
-    uint32_t start_addr = 0x...;
-    uint32_t end_addr   = 0x...;
-
-    fprintf(PC, "Target: 0x%08LX to 0x%08LX\r\n", start_addr, end_addr);
-
-    for (uint32_t addr = start_addr; addr < end_addr; addr += 65536)
-    {
-        if (is_mission_aborted) break;
-
-        sector_erase(smf, addr);
-        fprintf(PC, "Erased Addr: 0x%08LX\r\n", addr);
-
-        check_boss_status_polling(); // ★追加
-    }
-    fprintf(PC, "--- Erase Force Complete ---\r\n");
-    */
     fprintf(PC, "\r\n--- This Command is in progress. ---\r\n");
 }

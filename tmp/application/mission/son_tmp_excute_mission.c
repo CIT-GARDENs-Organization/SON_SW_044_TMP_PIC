@@ -219,11 +219,9 @@ int1 execute_command(Command* cmd)
             }
             case CMD_PICF_READ_AREA:
             {
-                fprintf(PC, "[CMD] PICF_READ_AREA (0x89)\r\n");
-                uint8_t area = cmd->content[1];
-                uint8_t start_packet = cmd->content[2];
-                uint8_t request_packet = cmd->content[3];
-                execute_picf_read_area(area, start_packet, request_packet);
+                uint16_t start_pkt = ((uint16_t)cmd->content[2] << 8) | cmd->content[3];
+                uint16_t req_pkts  = ((uint16_t)cmd->content[4] << 8) | cmd->content[5];
+                execute_picf_read_area(cmd->content[1], start_pkt, req_pkts);
                 break;
             }
             case CMD_PICF_RESET_ADDRESS:

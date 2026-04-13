@@ -2,9 +2,8 @@ import sys
 
 def print_header():
     print("==================================================")
-    print("TMP Command Payload Generator v1.0")
+    print("  TMP Command Payload Generator v2.3")
     print("==================================================")
-    print("")
     print("BOSS PIC Simulator に貼り付けるための 9Byte の")
     print("UPLINK COMMAND ペイロードを自動生成します。")
     print("--------------------------------------------------")
@@ -30,6 +29,24 @@ def get_int_input(prompt, min_val, max_val, is_hex=False):
         except ValueError:
             print("[エラー] 正しい数値を入力してください。")
 
+def get_hex_choice(prompt, valid_choices):
+    """16進数の文字列（例: 'A0', '8F'）または1桁の文字での入力を受け付ける"""
+    while True:
+        choice = input(prompt).strip().upper()
+        # プレフィックス(0x)がついていれば外す
+        if choice.startswith('0X'):
+            choice = choice[2:]
+
+        # 入力が有効なリストに含まれているか確認 (80 や 0 などの両方に対応)
+        if choice in valid_choices:
+            return choice
+        # 1文字入力の場合、対応するキーを推測
+        matching = [k for k in valid_choices if k.endswith(choice) and len(k) == 2]
+        if matching:
+            return matching[0]
+
+        print(f"[エラー] 有効なコマンドIDを入力してください: {', '.join(valid_choices)}")
+
 def format_payload(cmd_id, args):
     """1つのCMD_IDと最大8つの引数から9ByteのHEX文字列を生成する"""
     payload = [cmd_id] + args
@@ -40,83 +57,164 @@ def format_payload(cmd_id, args):
     hex_str = " ".join(f"{b:02X}" for b in payload)
     return hex_str
 
-def generate_measurement_command():
-    print("\n--- 計測コマンド (0xA0 - 0xA3) ---")
-    print("1: A0 (STR - 保存のみ)")
-    print("2: A1 (STR_DEBUG - ダンプのみ)")
-    print("3: A2 (STR_PRINT - 生データリアルタイム出力)")
-    print("4: A3 (STR_DEBUG_SAVE - 保存  +  ダンプ)")
+def input_address_and_packets(needs_sectors=False, is_smf=False):
+    """アドレス(4Byte)と、パケット数(2Byte)またはセクタ数(1Byte)の入力を求める共通処理"""
 
-    cmd_choice = get_int_input("> コマンドの種類を選択 (1-4): ", 1, 4)
-    cmd_id = {1: 0xA0, 2: 0xA1, 3: 0xA2, 4: 0xA3}[cmd_choice]
+    # ★追加: アドレス入力時にカンペ(ガイド)を表示する
+    if is_smf:
+        print("\n--- [参考] SMF (CPLD) 最新メモリマップ ---")
+        print(" 0x04DA1000 : STR_DATA (128KB)")
+        print(" 0x04DC2000 : PICLOG_DATA (64KB)")
+        print("------------------------------------------")
+    else:
+        print("\n--- [参考] PICF (Local) 最新メモリマップ ---")
+        print(" 0x00000000 : DATA_TABLE (メイン)")
+        print(" 0x00001000 : DATA_TABLE (バックアップ)")
+        print(" 0x00010000 : PICLOG_DATA (64KB)")
+        print(" 0x00020000 : STR_DATA (残り約15.8MB)")
+        print("--------------------------------------------")
 
-    print("\n--- サンプリングレート ---")
-    print("1: 10ms    2: 50ms    3: 100ms")
-    print("4: 500ms   5: 1sec    6: 5sec")
-    print("7: 2432ms  8: 4865ms  9: 9730ms")
+    print("※ アドレスは16進数(例: 0x10000) または 10進数 で入力できます。")
+    # ★修正: SMFのアドレス(0x04DA1000など)が入るように上限を 0xFFFFFFFF に拡張
+    addr = get_int_input("> 開始アドレス (0x00000000 - 0xFFFFFFFF): ", 0, 0xFFFFFFFF, is_hex=True)
 
-    rate = get_int_input("> サンプリングレートを選択 (1-9): ", 1, 9)
-
-    # Arg1(CH指定)は無視されるため 0x00、Arg2にレートを入れる
-    args = [0x00, rate]
-
-    return format_payload(cmd_id, args)
-
-def generate_read_area_command():
-    print("\n--- エリア指定読み出し (0x89) ---")
-    print("0: DATA_TABLE (管理領域)")
-    print("1: PICLOG (ログ領域)")
-    print("2: STR_DATA (計測データ領域)")
-
-    area = get_int_input("> エリアIDを選択 (0-2): ", 0, 2)
-    start_pkt = get_int_input("> 読み出し開始パケット (0-255) [例: 0=最新から]: ", 0, 255)
-    req_pkts = get_int_input("> 読み出すパケット数 (1-255) [例: 50]: ", 1, 255)
-
-    args = [area, start_pkt, req_pkts]
-
-    return format_payload(0x89, args)
-
-def generate_direct_address_command():
-    print("\n--- 直接アドレス指定コマンド (0x86, 0x81, etc...) ---")
-    print("1: 0x86 (PICF_READ - 読み出し)")
-    print("2: 0x81 (PICF_ERASE_1SECTOR - 64KB消去)")
-    print("3: 0x84 (PICF_WRITE_DEMO - デモ書き込み)")
-    print("4: 0x90 (SMF_COPY - CPLD転送)")
-
-    cmd_choice = get_int_input("> コマンドを選択 (1-4): ", 1, 4)
-    cmd_id = {1: 0x86, 2: 0x81, 3: 0x84, 4: 0x90}[cmd_choice]
-
-    print("\n※ アドレスは16進数(例: 0x1000) または 10進数 で入力できます。")
-    addr = get_int_input("> 開始アドレス (0x00000000 - 0x00FFFFFF): ", 0, 0x00FFFFFF, is_hex=True)
-
-    # アドレスを 4Byte にビッグエンディアン分割
     a3 = (addr >> 24) & 0xFF
     a2 = (addr >> 16) & 0xFF
     a1 = (addr >> 8)  & 0xFF
     a0 = addr & 0xFF
 
-    if cmd_id == 0x81:
-        # 消去系は Arg7 にセクタ数
-        sector_num = get_int_input("> 消去するセクタ数 (1-255): ", 1, 255)
-        args = [a3, a2, a1, a0, 0x00, 0x00, sector_num]
+    if needs_sectors:
+        sector_num = get_int_input("> 処理するセクタ数 (1-255): ", 1, 255)
+        return [a3, a2, a1, a0, 0x00, 0x00, sector_num]
     else:
-        # 読み書き系は Arg6,7 にパケット数(16bit)
         packet_num = get_int_input("> 処理するパケット数 (1-65535): ", 1, 65535)
         p1 = (packet_num >> 8) & 0xFF
         p0 = packet_num & 0xFF
-        args = [a3, a2, a1, a0, 0x00, p1, p0]
+        return [a3, a2, a1, a0, 0x00, p1, p0]
+
+def generate_8x_command():
+    print("\n--- 8x: PICF (Local Flash) 制御コマンド ---")
+    print(" 80: PICF_ERASE_ALL       (全消去)")
+    print(" 81: PICF_ERASE_1SECTOR   (64KB単位消去)")
+    print(" 82: PICF_ERASE_4K        (4KB単位消去)")
+    print(" 83: PICF_ERASE_32K       (32KB単位消去)")
+    print(" 84: PICF_WRITE_DEMO      (デモ書込)")
+    print(" 85: PICF_WRITE_4K        (4KBテスト書込)")
+    print(" 86: PICF_READ            (物理アドレス読出)")
+    print(" 87: PICF_READ_ADDRESS    (使用量カウンタ確認)")
+    print(" 88: PICF_ERASE_RESET     (全消去＆リセット)")
+    print(" 89: PICF_READ_AREA       (エリア指定読出 ★推奨)")
+    print(" 8F: PICF_RESET_ADDR      (カウンタのみリセット)")
+
+    valid_cmds = ['80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '8F']
+    cmd_str = get_hex_choice("\n> 実行するコマンドIDを下2桁(または1桁)で入力 (例: 89, 9): ", valid_cmds)
+    cmd_id = int(cmd_str, 16)
+
+    args = []
+
+    if cmd_id in [0x80, 0x87, 0x88, 0x8F]:
+        pass
+    elif cmd_id in [0x81, 0x82, 0x83]:
+        args = input_address_and_packets(needs_sectors=True, is_smf=False)
+    elif cmd_id in [0x84, 0x86]:
+        args = input_address_and_packets(needs_sectors=False, is_smf=False)
+    elif cmd_id == 0x85:
+        # ★追加: ここでもカンペを表示する
+        print("\n--- [参考] PICF (Local) 最新メモリマップ ---")
+        print(" 0x00000000 : DATA_TABLE (メイン)")
+        print(" 0x00001000 : DATA_TABLE (バックアップ)")
+        print(" 0x00010000 : PICLOG_DATA (64KB)")
+        print(" 0x00020000 : STR_DATA (残り約15.8MB)")
+        print("--------------------------------------------")
+        print("※ アドレスは16進数(例: 0x10000) または 10進数 で入力できます。")
+        addr = get_int_input("> 開始アドレス (0x00000000 - 0xFFFFFFFF): ", 0, 0xFFFFFFFF, is_hex=True)
+        args = [(addr >> 24) & 0xFF, (addr >> 16) & 0xFF, (addr >> 8) & 0xFF, addr & 0xFF]
+    elif cmd_id == 0x89:
+        print("\n0: DATA_TABLE (管理領域) | 1: PICLOG (ログ領域) | 2: STR_DATA (計測領域)")
+        area = get_int_input("> エリアIDを選択 (0-2): ", 0, 2)
+
+        if area == 2:
+            print("\n--- 読み出し方法の選択 ---")
+            print("1: 手動で開始パケットとパケット数を指定する")
+            print("2: 「N回目」の測定データを丸ごと指定する (1回=32パケットとして自動計算)")
+            read_mode = get_int_input("> 選択 (1-2): ", 1, 2)
+        else:
+            read_mode = 1
+
+        if read_mode == 1:
+            start_pkt = get_int_input("> 読み出し開始パケット (0-65535) [例: 0=最新から]: ", 0, 65535)
+            req_pkts = get_int_input("> 読み出すパケット数 (1-65535) [例: 32]: ", 1, 65535)
+        else:
+            n_th = get_int_input("> 何回目の測定を読み出しますか？ (1-2048): ", 1, 2048)
+            start_pkt = (n_th - 1) * 32
+            req_pkts = 32
+            print(f" [*] 自動計算: 開始パケット = {start_pkt}, 読み出しパケット数 = {req_pkts}")
+
+        args = [
+            area,
+            (start_pkt >> 8) & 0xFF,
+            start_pkt & 0xFF,
+            (req_pkts >> 8) & 0xFF,
+            req_pkts & 0xFF
+        ]
 
     return format_payload(cmd_id, args)
 
-def generate_system_command():
-    print("\n--- システム・単純コマンド ---")
-    print("1: 0xAF (MISSION_ABORT - 強制停止)")
-    print("2: 0xB0 (RETURN_TIME - 時刻確認)")
-    print("3: 0x87 (PICF_READ_ADDRESS - カウンタ確認)")
-    print("4: 0x8F (PICF_RESET_ADDR - カウンタリセット)")
+def generate_9x_command():
+    print("\n--- 9x: SMF (Shared Mission Flash) 制御コマンド ---")
+    print(" 90: SMF_COPY             (PICF -> SMF コピー)")
+    print(" 91: SMF_READ             (読出)")
+    print(" 92: SMF_ERASE            (64KB単位消去)")
+    print(" 93: SMF_COPY_FORCE       (強制コピー)")
+    print(" 94: SMF_READ_FORCE       (強制読出)")
+    print(" 95: SMF_ERASE_FORCE      (強制特定エリア消去)")
 
-    cmd_choice = get_int_input("> コマンドを選択 (1-4): ", 1, 4)
-    cmd_id = {1: 0xAF, 2: 0xB0, 3: 0x87, 4: 0x8F}[cmd_choice]
+    valid_cmds = ['90', '91', '92', '93', '94', '95']
+    cmd_str = get_hex_choice("\n> 実行するコマンドIDを下2桁(または1桁)で入力 (例: 90, 0): ", valid_cmds)
+    cmd_id = int(cmd_str, 16)
+
+    args = []
+    if cmd_id in [0x90, 0x91, 0x93, 0x94]:
+        args = input_address_and_packets(needs_sectors=False, is_smf=True)
+    elif cmd_id == 0x92:
+        args = input_address_and_packets(needs_sectors=True, is_smf=True)
+    elif cmd_id == 0x95:
+        pass
+
+    return format_payload(cmd_id, args)
+
+def generate_Ax_command():
+    print("\n--- Ax: 計測系・ミッション制御コマンド ---")
+    print(" A0: CMD_STR              (保存のみ [本番用])")
+    print(" A1: CMD_STR_DEBUG        (ダンプのみ)")
+    print(" A2: CMD_STR_PRINT        (生データリアルタイム出力)")
+    print(" A3: CMD_STR_DEBUG_SAVE   (保存 ＋ ダンプ)")
+    print(" AF: CMD_MISSION_ABORT    (強制停止)")
+
+    valid_cmds = ['A0', 'A1', 'A2', 'A3', 'AF']
+    cmd_str = get_hex_choice("\n> 実行するコマンドIDを下2桁(または1桁)で入力 (例: A0, 0, AF, F): ", valid_cmds)
+    cmd_id = int(cmd_str, 16)
+
+    if cmd_id == 0xAF:
+        return format_payload(cmd_id, [])
+
+    print("\n--- サンプリングレート ---")
+    print(" 1: 10ms     2: 50ms     3: 100ms")
+    print(" 4: 500ms    5: 1sec     6: 5sec")
+    print(" 7: 2432ms   8: 4865ms   9: 9730ms")
+
+    rate = get_int_input("> サンプリングレートを選択 (1-9): ", 1, 9)
+
+    args = [0x00, rate]
+    return format_payload(cmd_id, args)
+
+def generate_Bx_command():
+    print("\n--- Bx: システム制御コマンド ---")
+    print(" B0: RETURN_TIME          (時刻確認)")
+
+    valid_cmds = ['B0']
+    cmd_str = get_hex_choice("\n> 実行するコマンドIDを下2桁(または1桁)で入力 (例: B0, 0): ", valid_cmds)
+    cmd_id = int(cmd_str, 16)
 
     return format_payload(cmd_id, [])
 
@@ -125,35 +223,35 @@ def main():
 
     while True:
         print("\n==================================================")
-        print(" 作成したいコマンドのカテゴリを選んでください")
+        print(" 作成したいコマンドのカテゴリ(プレフィックス)を選んでください")
         print("--------------------------------------------------")
-        print(" 1: 計測コマンド (A0 - A3)")
-        print(" 2: エリア指定読み出し (89)")
-        print(" 3: 物理アドレス指定の処理 (86, 81, 84, 90 など)")
-        print(" 4: システム・引数なしコマンド (AF, B0, 87, 8F)")
+        print(" 8: PICFコマンド群")
+        print(" 9: SMFコマンド群")
+        print(" A: 計測・ミッション制御コマンド群")
+        print(" B: システム制御コマンド群")
         print(" 0: 終了")
         print("==================================================")
 
-        category = get_int_input("\n> カテゴリを選択 (0-4): ", 0, 4)
+        category_str = get_hex_choice("\n> カテゴリを選択 (8, 9, A, B, 0): ", ['8', '9', 'A', 'B', '0'])
 
-        if category == 0:
+        if category_str == '0':
             print("終了します。")
             break
 
         payload_str = ""
 
-        if category == 1:
-            payload_str = generate_measurement_command()
-        elif category == 2:
-            payload_str = generate_read_area_command()
-        elif category == 3:
-            payload_str = generate_direct_address_command()
-        elif category == 4:
-            payload_str = generate_system_command()
+        if category_str == '8':
+            payload_str = generate_8x_command()
+        elif category_str == '9':
+            payload_str = generate_9x_command()
+        elif category_str == 'A':
+            payload_str = generate_Ax_command()
+        elif category_str == 'B':
+            payload_str = generate_Bx_command()
 
         print("\n" + "="*50)
         print(" 生成されたコマンドペイロード (9 Byte) ")
-        print("="*50)
+        print("=" * 50)
         print(f"\n      {payload_str}\n")
         print("-" * 50)
         print(" ※ 上記の文字列を BOSS PIC Simulator の入力プロンプトに")

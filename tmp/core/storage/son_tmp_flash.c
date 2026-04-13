@@ -90,6 +90,8 @@ void misf_init()
         memcpy(&str_data,    &data_table[sizeof(Flash_t)], sizeof(Flash_t));
 
         fprintf(PC, "\tData table loaded successfully.\r\n");
+        // ★修正: PICLOGの使用済み容量も表示するように追加しました！
+        fprintf(PC, "\t[PICLOG]   Used Counter: %lu\r\n", piclog_data.used_counter);
         fprintf(PC, "\t[STR DATA] Used Counter: %lu\r\n", str_data.used_counter);
     }
     else
