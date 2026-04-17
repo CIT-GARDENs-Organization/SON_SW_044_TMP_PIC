@@ -165,14 +165,14 @@ void execute_measurement(uint8_t mode, uint8_t samplingRate)
         // --- CH1 ---
         switch_channel(0);
         delay_us(100);             // アンプの出力が安定するまで待つ
-        read_adc_ltc2452();        // ★追加: ダミーリード (空読みをしてCH1の電圧変換をスタートさせる)
+        read_adc_ltc2452();        // ★ダミーリード (空読みをしてCH1の電圧変換をスタートさせる)
         delay_ms(25);              // LTC2452の最大変換時間(23ms)を確実に待つ
         uint16_t strain1 = read_adc_ltc2452(); // CH1の正しいデータを取得
 
         // --- CH2 ---
         switch_channel(1);
         delay_us(100);             // アンプの出力が安定するまで待つ
-        read_adc_ltc2452();        // ★追加: ダミーリード (空読みをしてCH2の電圧変換をスタートさせる)
+        read_adc_ltc2452();        // ★ダミーリード (空読みをしてCH2の電圧変換をスタートさせる)
         delay_ms(25);              // LTC2452の最大変換時間(23ms)を確実に待つ
         uint16_t strain2 = read_adc_ltc2452(); // CH2の正しいデータを取得
 
@@ -230,10 +230,9 @@ void execute_measurement(uint8_t mode, uint8_t samplingRate)
             block_count = 0;
         }
 
+        // ★修正: 10ms, 50ms の設定を削除し、不正値が渡された場合のデフォルトも 100ms に引き上げました
         switch (samplingRate)
         {
-            case SAMP_RATE_10MS:   delay_ms_with_polling(10);   break;
-            case SAMP_RATE_50MS:   delay_ms_with_polling(50);   break;
             case SAMP_RATE_100MS:  delay_ms_with_polling(100);  break;
             case SAMP_RATE_500MS:  delay_ms_with_polling(500);  break;
             case SAMP_RATE_1000MS: delay_ms_with_polling(1000); break;
@@ -241,7 +240,7 @@ void execute_measurement(uint8_t mode, uint8_t samplingRate)
             case SAMP_RATE_4865MS: delay_ms_with_polling(4865); break;
             case SAMP_RATE_5000MS: delay_ms_with_polling(5000); break;
             case SAMP_RATE_9730MS: delay_ms_with_polling(9730); break;
-            default:               delay_ms_with_polling(10);   break;
+            default:               delay_ms_with_polling(100);  break;
         }
     }
 

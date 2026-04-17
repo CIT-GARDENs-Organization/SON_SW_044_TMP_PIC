@@ -3,9 +3,8 @@ import os
 import csv
 
 # サンプリングレートIDと文字列のマッピング (最新仕様に対応)
+# ★修正: 10ms(0x01) と 50ms(0x02) を削除しました
 SAMP_RATE_MAP = {
-    0x01: "10ms",
-    0x02: "50ms",
     0x03: "100ms",
     0x04: "500ms",
     0x05: "1sec",
@@ -40,11 +39,11 @@ def is_header_packet(packet):
     hw_ch = (mode_ch_rate >> 4) & 0x01
     samp_rate = mode_ch_rate & 0x0F
 
-    # モードが1〜4、CHが0固定、サンプリングレートが1〜9の範囲に収まっていればヘッダーとみなす
-    # (FF FF FF... などのゴミデータはここで弾かれる)
+    # モードが1〜4、CHが0固定、サンプリングレートが3〜9の範囲に収まっていればヘッダーとみなす
+    # ★修正: レートの許容範囲を 3〜9 に変更しました
     if not (1 <= mode <= 4): return False
     if hw_ch != 0: return False
-    if not (1 <= samp_rate <= 9): return False
+    if not (3 <= samp_rate <= 9): return False
 
     return True
 
@@ -184,7 +183,7 @@ def main():
         rate_id = session['header']['samp_rate']
         rate_str = SAMP_RATE_MAP.get(rate_id, f"ID{rate_id}")
 
-        # 例: Data_36sec_10ms.csv
+        # 例: Data_36sec_100ms.csv
         output_filename = f"Data_{time_sec}sec_{rate_str}.csv"
 
         # もし同じ時刻・同じレートのデータが複数見つかった場合は連番を付ける

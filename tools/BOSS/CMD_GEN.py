@@ -60,7 +60,6 @@ def format_payload(cmd_id, args):
 def input_address_and_packets(needs_sectors=False, is_smf=False):
     """アドレス(4Byte)と、パケット数(2Byte)またはセクタ数(1Byte)の入力を求める共通処理"""
 
-    # ★追加: アドレス入力時にカンペ(ガイド)を表示する
     if is_smf:
         print("\n--- [参考] SMF (CPLD) 最新メモリマップ ---")
         print(" 0x04DA1000 : STR_DATA (128KB)")
@@ -75,7 +74,6 @@ def input_address_and_packets(needs_sectors=False, is_smf=False):
         print("--------------------------------------------")
 
     print("※ アドレスは16進数(例: 0x10000) または 10進数 で入力できます。")
-    # ★修正: SMFのアドレス(0x04DA1000など)が入るように上限を 0xFFFFFFFF に拡張
     addr = get_int_input("> 開始アドレス (0x00000000 - 0xFFFFFFFF): ", 0, 0xFFFFFFFF, is_hex=True)
 
     a3 = (addr >> 24) & 0xFF
@@ -119,7 +117,6 @@ def generate_8x_command():
     elif cmd_id in [0x84, 0x86]:
         args = input_address_and_packets(needs_sectors=False, is_smf=False)
     elif cmd_id == 0x85:
-        # ★追加: ここでもカンペを表示する
         print("\n--- [参考] PICF (Local) 最新メモリマップ ---")
         print(" 0x00000000 : DATA_TABLE (メイン)")
         print(" 0x00001000 : DATA_TABLE (バックアップ)")
@@ -198,12 +195,13 @@ def generate_Ax_command():
     if cmd_id == 0xAF:
         return format_payload(cmd_id, [])
 
+    # ★修正: 10ms, 50ms の選択肢を削除し、ID 3〜9 に限定しました
     print("\n--- サンプリングレート ---")
-    print(" 1: 10ms     2: 50ms     3: 100ms")
-    print(" 4: 500ms    5: 1sec     6: 5sec")
-    print(" 7: 2432ms   8: 4865ms   9: 9730ms")
+    print(" 3: 100ms   4: 500ms   5: 1sec")
+    print(" 6: 5sec    7: 2432ms  8: 4865ms")
+    print(" 9: 9730ms")
 
-    rate = get_int_input("> サンプリングレートを選択 (1-9): ", 1, 9)
+    rate = get_int_input("> サンプリングレートを選択 (3-9): ", 3, 9)
 
     args = [0x00, rate]
     return format_payload(cmd_id, args)

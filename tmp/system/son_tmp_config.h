@@ -50,7 +50,6 @@
 
     #use spi(MASTER, DI=PIN_D6, DO=PIN_D7, CLK=PIN_D5, BAUD=1000000, MODE=0, BITS=8, stream=SMF_STREAM)
 
-
 #endif
 
 // ==========================================
@@ -92,9 +91,9 @@
 // --- その他 ---
 #define CMD_RETURN_TIME              0xB0
 
-
-#define SAMP_RATE_10MS               0x01  // 0.01秒
-#define SAMP_RATE_50MS               0x02  // 0.05秒
+// ★修正: 物理的にADC処理が間に合わないため 10ms, 50ms の設定を除外しました
+// #define SAMP_RATE_10MS               0x01  // 0.01秒
+// #define SAMP_RATE_50MS               0x02  // 0.05秒
 #define SAMP_RATE_100MS              0x03  // 0.10秒
 #define SAMP_RATE_500MS              0x04  // 0.50秒
 #define SAMP_RATE_1000MS             0x05  // 1.00秒

@@ -8,8 +8,9 @@
 // ============================================================================
 void print_sampling_rate(uint8_t rate) {
     switch(rate) {
-        case 0x01: fprintf(PC, "10ms"); break;
-        case 0x02: fprintf(PC, "50ms"); break;
+        // ★修正: 10msと50msの表示を削除しました
+        // case 0x01: fprintf(PC, "10ms"); break;
+        // case 0x02: fprintf(PC, "50ms"); break;
         case 0x03: fprintf(PC, "100ms"); break;
         case 0x04: fprintf(PC, "500ms"); break;
         case 0x05: fprintf(PC, "1000ms"); break;
