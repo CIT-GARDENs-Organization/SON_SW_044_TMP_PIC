@@ -1,3 +1,6 @@
+#include "mission_tools.h"
+#include "../../tmp/hardware/mcu/uart.h" // uart_fetch_to_buffer を使用するためインクルード
+
 int1 req_use_smf()
 {
    fprintf(PC, "Start SMF using reqest seaquence\r\n");
@@ -8,6 +11,9 @@ int1 req_use_smf()
    {
       for (int16 i = 0; i < 1200; i++) // 10 min
       {
+         // ★修正: ループ毎に割り込みリングバッファからデータを吸い上げる処理を追加
+         uart_fetch_to_buffer();
+
          if (boss_receive_buffer_size > 0)
          {
             Command command = make_receive_command(boss_receive_buffer, boss_receive_buffer_size);
@@ -27,6 +33,9 @@ int1 req_use_smf()
 
       for (int16 i = 0; i < 1200; i++) // 10 min
       {
+         // ★修正: 同様にデータを吸い上げる
+         uart_fetch_to_buffer();
+
          if (boss_receive_buffer_size > 0)
          {
             Command command = make_receive_command(boss_receive_buffer, boss_receive_buffer_size);
@@ -71,10 +80,9 @@ void finished_use_smf()
 
 void check_and_respond_to_boss()
 {
-   if (kbhit())
+   if (uart_has_data())
    {
-      fgetc(BOSS);
+      uart_getc();
       transmit_status();
    }
 }
-

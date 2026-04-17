@@ -5,7 +5,7 @@
 #include "son_tmp_mode_mission.h"
 #include "son_tmp_mode_flash.h"
 #include "../../../lib/communication/communication.h"
-#include "../../../lib/communication/communication_driver.h" // ★追加
+#include "../../../lib/communication/communication_driver.h"
 
 // ============================================================================
 // グローバル変数の実体定義
@@ -15,7 +15,7 @@ int1 is_use_smf_req_in_mission = 0;
 bool is_mission_aborted = false;
 
 // ============================================================================
-// グローバルなポーリング監視用関数
+// グローバルなポーリング監視用関数 (割り込みバッファ対応版)
 // ============================================================================
 void check_boss_status_polling(void)
 {
@@ -23,9 +23,10 @@ void check_boss_status_polling(void)
     static uint8_t expected_len = 0;
     static uint8_t current_frame_id = 0;
 
-    while (kbhit(BOSS))
+    // ハードウェア直接(kbhit)ではなく、割り込みで溜まったリングバッファを確認
+    while (uart_has_data())
     {
-        uint8_t c = fgetc(BOSS);
+        uint8_t c = uart_getc();
 
         if (rx_state == 0 && c == 0xAA)
         {
@@ -65,7 +66,6 @@ void check_boss_status_polling(void)
 
             if (rx_state == expected_len)
             {
-                // ★修正: ポーリング中の通信ログを詳細で分かりやすいものに改善しました
                 if (current_frame_id == 0x01)
                 {
                     fprintf(PC, "\r\n[INFO] STATUS_CHECK(0x01) Received during operation. Replying status: %u\r\n", status);
@@ -100,72 +100,51 @@ int1 execute_command(Command* cmd)
 
         fprintf(PC, "Received Command: 0x%02X\r\n", cmd_id);
 
-        // オリジナルの仕様通り、コマンドを受信した直後に1回だけACKを自発送信
         transmit_ack();
         fprintf(PC, "-> Transmitted ACK to BOSS\r\n");
 
         switch (cmd_id)
         {
-            // ----------------------------------------------------
             // 計測コマンド
-            // ----------------------------------------------------
             case CMD_STR:
-            {
                 fprintf(PC, "[CMD] STR (0xA0)\r\n");
                 status = EXECUTING_MISSION;
                 execute_mission_sequence((uint8_t)cmd->content[2], 0x01);
                 break;
-            }
             case CMD_STR_DEBUG:
-            {
                 fprintf(PC, "[CMD] STR_DEBUG (0xA1)\r\n");
                 status = EXECUTING_MISSION;
                 execute_mission_sequence((uint8_t)cmd->content[2], 0x02);
                 break;
-            }
             case CMD_STR_PRINT:
-            {
                 fprintf(PC, "[CMD] STR_PRINT (0xA2)\r\n");
                 status = EXECUTING_MISSION;
                 execute_mission_sequence((uint8_t)cmd->content[2], 0x03);
                 break;
-            }
             case CMD_STR_DEBUG_SAVE:
-            {
                 fprintf(PC, "[CMD] STR_DEBUG_SAVE (0xA3)\r\n");
                 status = EXECUTING_MISSION;
                 execute_mission_sequence((uint8_t)cmd->content[2], 0x04);
                 break;
-            }
-            // ★追加: 中断コマンドが待機中(IDLE)に送られてきた場合の対応
             case CMD_MISSION_ABORT:
-            {
                 fprintf(PC, "[CMD] MISSION_ABORT (0xAF)\r\n");
                 is_mission_aborted = true;
                 fprintf(PC, "Mission Aborted by Boss.\r\n");
                 break;
-            }
 
-            // ----------------------------------------------------
-            // PICF (Mission Flash) コマンド
-            // ----------------------------------------------------
+            // PICF コマンド
             case CMD_PICF_READ:
             {
                 fprintf(PC, "[CMD] PICF_READ (0x86)\r\n");
-                uint32_t address = ((uint32_t)cmd->content[1] << 24) |
-                                   ((uint32_t)cmd->content[2] << 16) |
-                                   ((uint32_t)cmd->content[3] << 8)  |
-                                    (uint32_t)cmd->content[4];
+                uint32_t address = ((uint32_t)cmd->content[1] << 24) | ((uint32_t)cmd->content[2] << 16) | ((uint32_t)cmd->content[3] << 8) | (uint32_t)cmd->content[4];
                 uint16_t packet_num = ((uint16_t)cmd->content[6] << 8) | (uint16_t)cmd->content[7];
                 execute_picf_read(address, packet_num);
                 break;
             }
             case CMD_PICF_ERASE_ALL:
-            {
                 fprintf(PC, "[CMD] PICF_ERASE_ALL (0x80)\r\n");
                 execute_picf_erase_all();
                 break;
-            }
             case CMD_PICF_ERASE_1SECTOR:
             {
                 fprintf(PC, "[CMD] PICF_ERASE_1SECTOR (0x81)\r\n");
@@ -206,17 +185,13 @@ int1 execute_command(Command* cmd)
                 break;
             }
             case CMD_PICF_READ_ADDRESS:
-            {
                 fprintf(PC, "[CMD] PICF_READ_ADDRESS (0x87)\r\n");
                 execute_picf_read_address();
                 break;
-            }
             case CMD_PICF_ERASE_AND_RESET:
-            {
                 fprintf(PC, "[CMD] PICF_ERASE_AND_RESET (0x88)\r\n");
                 execute_picf_erase_and_reset();
                 break;
-            }
             case CMD_PICF_READ_AREA:
             {
                 uint16_t start_pkt = ((uint16_t)cmd->content[2] << 8) | cmd->content[3];
@@ -225,15 +200,11 @@ int1 execute_command(Command* cmd)
                 break;
             }
             case CMD_PICF_RESET_ADDRESS:
-            {
                 fprintf(PC, "[CMD] PICF_RESET_ADDRESS (0x8F)\r\n");
                 execute_picf_reset_address();
                 break;
-            }
 
-            // ----------------------------------------------------
-            // SMF (CPLD Flash) コマンド (0x90 - 0x95)
-            // ----------------------------------------------------
+            // SMF コマンド
             case CMD_SMF_COPY:
             case CMD_SMF_COPY_FORCE:
             {
@@ -264,28 +235,19 @@ int1 execute_command(Command* cmd)
                 break;
             }
             case CMD_SMF_ERASE_FORCE:
-            {
                 fprintf(PC, "[CMD] SMF_ERASE_FORCE (0x%02X)\r\n", cmd_id);
                 execute_smf_erase_force();
                 break;
-            }
 
-            // ----------------------------------------------------
-            // その他・システム制御コマンド
-            // ----------------------------------------------------
+            // その他
             case CMD_RETURN_TIME:
-            {
                 fprintf(PC, "[CMD] RETURN_TIME (0xB0)\r\n");
                 uint32_t current_time = get_current_sec();
                 fprintf(PC, "Current Time: %lu sec\r\n", current_time);
-                // send_time_to_boss(current_time);
                 break;
-            }
             default:
-            {
                 fprintf(PC, "Command received but not implemented yet: 0x%02X\r\n", cmd_id);
                 break;
-            }
         }
 
         status = FINISHED;
@@ -295,25 +257,14 @@ int1 execute_command(Command* cmd)
     // ----------------------------------------------------
     else if (cmd->frame_id == 0x01)
     {
-        // 問い合わせが来た時だけ、現在のステータスを返す（ポーリング応答）
         fprintf(PC, "Received STATUS_CHECK (0x01). Replying status: %u\r\n", status);
         transmit_status();
     }
-    // ★追加: Frame ID 0x03 を定期的な同期・ステータス確認として処理し、時刻を更新する
     else if (cmd->frame_id == 0x03)
     {
-        // ペイロード(4Byte)から時刻を抽出 (リトルエンディアン想定: 1E 00 00 00 -> 0x0000001E = 30)
-        uint32_t received_time = ((uint32_t)cmd->content[3] << 24) |
-                                 ((uint32_t)cmd->content[2] << 16) |
-                                 ((uint32_t)cmd->content[1] << 8)  |
-                                 (uint32_t)cmd->content[0];
-
-        // タイマーモジュールの秒カウンタを上書き更新する
+        uint32_t received_time = ((uint32_t)cmd->content[3] << 24) | ((uint32_t)cmd->content[2] << 16) | ((uint32_t)cmd->content[1] << 8) | (uint32_t)cmd->content[0];
         set_current_sec(received_time);
-
         fprintf(PC, "Received TIME_SYNC (0x03). Time updated to: %lu sec. Replying status: %u\r\n", received_time, status);
-
-        // BOSSに現在の状態を返す
         transmit_status();
     }
     else
