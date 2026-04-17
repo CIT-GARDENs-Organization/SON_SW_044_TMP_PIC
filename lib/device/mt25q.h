@@ -18,8 +18,8 @@ typedef enum spi_stream{
     SPI_3,
 }SpiStreamId;
 
-#define MT25QL128ABA 0x00     //Mission Flash
-#define MT25QL01GBBB 0x01     //SMF,CF
+#define MT25QL128ABA 0x00     //Mission Flash (16MB)
+#define MT25QL01GBBB 0x01     //SMF,CF (128MB)
 typedef struct select_stream_to_flash{
     SpiStreamId spi_stream_id;
     unsigned int8 flash_model;
@@ -78,6 +78,8 @@ void write_data_byte(Flash flash_stream, unsigned int32 write_address,int8 write
 
 // ====================== Value List =====================
 #define MANUFACTURER_ID_MICRON 0x20 // Manufacturer ID for Micron flash
+#define CAPACITY_ID_16MB       0x18 // Capacity ID for MT25QL128ABA (128Mbit = 16MB)
+#define CAPACITY_ID_128MB      0x21 // Capacity ID for MT25QL01GBBB (1Gbit = 128MB)
 #define READ_ID_DATASIZE 20 // 20 bytes for read ID data
 
 
@@ -95,5 +97,3 @@ typedef union
 
 
 #endif
-
-

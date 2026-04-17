@@ -93,19 +93,29 @@ int8 status_register(Flash flash_stream){
 //
 //->success:True,fail:false
 int8 read_id(Flash flash_stream){
+   READ_ID_DATA read_id_data;
    int8 flash_cmd = CMD_READ_ID;
-   int8 chip_id[20];
    output_low(flash_stream.cs_pin);
-   spi_xfer_and_read_select_stream(flash_stream, &flash_cmd, 1, chip_id, 16);
+   spi_xfer_and_read_select_stream(flash_stream, &flash_cmd, 1, read_id_data.bytes, 16);
    output_high(flash_stream.cs_pin);
+
    #ifdef MT25Q_DEBUG
-      fprintf(PC,"Read ID:");
-      for(int8 print_counter = 0;print_counter < 20;print_counter++)
-         fprintf(PC,"%x ",chip_id[print_counter]);
-      fprintf(PC,"\r\n");
+      fprintf(PC,"Read ID: Mfr=%02X, Type=%02X, Cap=%02X\r\n",
+              read_id_data.fields.manufacturer_id,
+              read_id_data.fields.memory_type,
+              read_id_data.fields.capacity);
    #endif
+
    //chip id check
-   if(chip_id[0] == MANUFACTURER_ID_MICRON){
+   if(read_id_data.fields.manufacturer_id == MANUFACTURER_ID_MICRON){
+      // 容量IDの厳格チェック
+      if (flash_stream.flash_model == MT25QL128ABA && read_id_data.fields.capacity != CAPACITY_ID_16MB) {
+          return false;
+      }
+      if (flash_stream.flash_model == MT25QL01GBBB && read_id_data.fields.capacity != CAPACITY_ID_128MB) {
+          return false;
+      }
+
       #ifdef MT25Q_DEBUG
          fprintf(PC,"flash connect OK\r\n");
       #endif
@@ -573,11 +583,23 @@ int1 is_connect(Flash flash_stream){
    output_high(flash_stream.cs_pin);
    //fprintf(PC,"Read ID:%02X", read_id_data.fields.manufacturer_id);
    #ifdef MT25Q_DEBUG
-      fprintf(PC,"Read ID:");
-
+      fprintf(PC,"Read ID: Mfr=%02X, Type=%02X, Cap=%02X\r\n",
+              read_id_data.fields.manufacturer_id,
+              read_id_data.fields.memory_type,
+              read_id_data.fields.capacity);
    #endif
    //chip id check
    if(read_id_data.fields.manufacturer_id == MANUFACTURER_ID_MICRON){
+      // ★ 追加: フラッシュの容量が設計通りか厳格にチェックする
+      if (flash_stream.flash_model == MT25QL128ABA && read_id_data.fields.capacity != CAPACITY_ID_16MB) {
+          fprintf(PC,"[ERROR] MIS_FM Capacity mismatch! Expected 16MB(0x18), got 0x%02X\r\n", read_id_data.fields.capacity);
+          return false;
+      }
+      if (flash_stream.flash_model == MT25QL01GBBB && read_id_data.fields.capacity != CAPACITY_ID_128MB) {
+          fprintf(PC,"[ERROR] SMF Capacity mismatch! Expected 128MB(0x21), got 0x%02X\r\n", read_id_data.fields.capacity);
+          return false;
+      }
+
       #ifdef MT25Q_DEBUG
          fprintf(PC,"flash connect OK\r\n");
       #endif
