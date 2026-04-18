@@ -1,5 +1,5 @@
 #include "mission_tools.h"
-#include "../../tmp/hardware/mcu/uart.h" // uart_fetch_to_buffer を使用するためインクルード
+// uart.hの個別インクルードは不要です（son_tmp_main.hで解決されます）
 
 int1 req_use_smf()
 {
@@ -11,13 +11,30 @@ int1 req_use_smf()
    {
       for (int16 i = 0; i < 1200; i++) // 10 min
       {
-         // ★修正: ループ毎に割り込みリングバッファからデータを吸い上げる処理を追加
-         uart_fetch_to_buffer();
+         // ★修正: uart_fetch_to_buffer() を削除し、安全なkbhitポーリングに置き換えました
+         if (kbhit(BOSS))
+         {
+             uint8_t timeout_ms = 0;
+             while(timeout_ms < 5)
+             {
+                 if (kbhit(BOSS)) {
+                     if (boss_receive_buffer_size < RECEIVE_BUFFER_MAX) {
+                         boss_receive_buffer[boss_receive_buffer_size++] = fgetc(BOSS);
+                     } else {
+                         fgetc(BOSS);
+                     }
+                     timeout_ms = 0;
+                 } else {
+                     delay_ms(1);
+                     timeout_ms++;
+                 }
+             }
+         }
 
          if (boss_receive_buffer_size > 0)
          {
-            Command command = make_receive_command(boss_receive_buffer, boss_receive_buffer_size);
-            clear_receive_signal(boss_receive_buffer, &boss_receive_buffer_size);
+            Command command = make_receive_command((uint8_t*)boss_receive_buffer, boss_receive_buffer_size);
+            clear_receive_signal((uint8_t*)boss_receive_buffer, &boss_receive_buffer_size);
             if (command.frame_id == STATUS_CHECK)
             {
                transmit_status();
@@ -33,13 +50,30 @@ int1 req_use_smf()
 
       for (int16 i = 0; i < 1200; i++) // 10 min
       {
-         // ★修正: 同様にデータを吸い上げる
-         uart_fetch_to_buffer();
+         // ★修正: 同様にkbhitポーリング処理に置き換え
+         if (kbhit(BOSS))
+         {
+             uint8_t timeout_ms = 0;
+             while(timeout_ms < 5)
+             {
+                 if (kbhit(BOSS)) {
+                     if (boss_receive_buffer_size < RECEIVE_BUFFER_MAX) {
+                         boss_receive_buffer[boss_receive_buffer_size++] = fgetc(BOSS);
+                     } else {
+                         fgetc(BOSS);
+                     }
+                     timeout_ms = 0;
+                 } else {
+                     delay_ms(1);
+                     timeout_ms++;
+                 }
+             }
+         }
 
          if (boss_receive_buffer_size > 0)
          {
-            Command command = make_receive_command(boss_receive_buffer, boss_receive_buffer_size);
-            clear_receive_signal(boss_receive_buffer, &boss_receive_buffer_size);
+            Command command = make_receive_command((uint8_t*)boss_receive_buffer, boss_receive_buffer_size);
+            clear_receive_signal((uint8_t*)boss_receive_buffer, &boss_receive_buffer_size);
             if (command.frame_id == IS_SMF_AVAILABLE)
             {
                if (command.content[0] == ALLOW)
@@ -69,7 +103,6 @@ NEXT:
    is_use_smf_req_in_mission = FALSE;
    status = COPYING;
    return TRUE;
-   fprintf(PC, "End SMF using reqest seaquence\r\n");
 }
 
 
@@ -80,9 +113,9 @@ void finished_use_smf()
 
 void check_and_respond_to_boss()
 {
-   if (uart_has_data())
+   if (kbhit(BOSS))
    {
-      uart_getc();
+      fgetc(BOSS);
       transmit_status();
    }
 }

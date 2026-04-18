@@ -33,7 +33,7 @@ void main()
             loop_counter = 0;
         }
 
-        // --- 1. ハードウェアUARTのバッファから安全にデータを吸い上げる ---
+        // --- 1. ハードウェアUARTのバッファから安全にデータを吸い上げる (ポーリング方式) ---
         if (kbhit(BOSS))
         {
             uint8_t timeout_ms = 0;
@@ -67,10 +67,9 @@ void main()
         }
         // ------------------------------------------------
 
-        // --- 2. 12バイトの制限を外し、お手本通りの記述に戻す ---
+        // --- 2. コマンドパース処理 ---
         if(boss_receive_buffer_size > 0)
         {
-            // お手本通り volatile を付ける
             volatile Command recieve_cmd = make_receive_command((uint8_t*)boss_receive_buffer, boss_receive_buffer_size);
 
             clear_receive_signal((uint8_t*)boss_receive_buffer, &boss_receive_buffer_size);
@@ -79,13 +78,11 @@ void main()
             {
                 fprintf(PC, "\r\n[INFO] Valid Command Frame Received! ID: %02X\r\n", recieve_cmd.frame_id);
 
-                // お手本通り、名前を戻した execute_command を呼ぶ
                 execute_command((Command*)&recieve_cmd);
 
                 fprintf(PC,"\r\nwaiting for BOSS PIC command\r\n");
             }
 
-            // 処理が終わったら常にバッファをリセットして次の通信に備える
             boss_receive_buffer_size = 0;
             last_buffer_size = 0;
         }

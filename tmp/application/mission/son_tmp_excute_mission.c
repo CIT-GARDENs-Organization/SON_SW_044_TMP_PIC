@@ -15,7 +15,7 @@ int1 is_use_smf_req_in_mission = 0;
 bool is_mission_aborted = false;
 
 // ============================================================================
-// グローバルなポーリング監視用関数 (割り込みバッファ対応版)
+// グローバルなポーリング監視用関数
 // ============================================================================
 void check_boss_status_polling(void)
 {
@@ -23,10 +23,10 @@ void check_boss_status_polling(void)
     static uint8_t expected_len = 0;
     static uint8_t current_frame_id = 0;
 
-    // ハードウェア直接(kbhit)ではなく、割り込みで溜まったリングバッファを確認
-    while (uart_has_data())
+    // kbhit によるポーリング方式
+    while (kbhit(BOSS))
     {
-        uint8_t c = uart_getc();
+        uint8_t c = fgetc(BOSS);
 
         if (rx_state == 0 && c == 0xAA)
         {
