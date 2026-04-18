@@ -753,40 +753,40 @@ ROM Allocation:
 003FB6  transmit_status
 003FCE  check_boss_status_polling
 00422C  read_adc_internal
-00424E  switch_channel
-00428C  read_adc_ltc2452
-0042D4  calc_crc24
-0043E4  @DIV1616
-004460  delay_ms_with_polling
-004548  execute_measurement
-004E6A  execute_mission_sequence
-004F5A  execute_picf_read
-00521C  sector_erase
-005578  execute_picf_erase_all
-005682  execute_picf_erase_1sector
-005830  execute_picf_erase_4k
-0059E2  subsector_32kByte_erase
-005D40  execute_picf_erase_32k
-005EF2  execute_picf_write_demo
-00616A  @delay_us1
-00619E  execute_picf_write_4k
-00632E  print_flash_status
-006442  execute_picf_read_address
-00645A  execute_picf_reset_address
-0064A4  execute_picf_erase_and_reset
-0064D6  get_misf_status_struct
-006548  execute_picf_read_area
-006754  @PSTRINGR_950
-006780  calculate_smf_write_address
-006884  execute_smf_direct_copy
-006C5A  execute_smf_read
-006F46  execute_smf_erase
-00711C  execute_smf_erase_force
-007140  set_current_sec
-007154  execute_command
-008314  MAIN
-008314  @cinit1
-0083CE  @cinit2
+004258  switch_channel
+004296  read_adc_ltc2452
+0042DE  calc_crc24
+0043EE  @DIV1616
+00446A  delay_ms_with_polling
+004552  execute_measurement
+004E74  execute_mission_sequence
+004F64  execute_picf_read
+005226  sector_erase
+005582  execute_picf_erase_all
+00568C  execute_picf_erase_1sector
+00583A  execute_picf_erase_4k
+0059EC  subsector_32kByte_erase
+005D4A  execute_picf_erase_32k
+005EFC  execute_picf_write_demo
+006174  @delay_us1
+0061A8  execute_picf_write_4k
+006338  print_flash_status
+00644C  execute_picf_read_address
+006464  execute_picf_reset_address
+0064AE  execute_picf_erase_and_reset
+0064E0  get_misf_status_struct
+006552  execute_picf_read_area
+00675E  @PSTRINGR_950
+00678A  calculate_smf_write_address
+00688E  execute_smf_direct_copy
+006C64  execute_smf_read
+006F50  execute_smf_erase
+007126  execute_smf_erase_force
+00714A  set_current_sec
+00715E  execute_command
+00831E  MAIN
+00831E  @cinit1
+0083D8  @cinit2
 0135  NEXT
 
 Project Directory:
@@ -795,7 +795,7 @@ Project Directory:
 Project Files:
     son_tmp_main.c                                          [17-4-26 19:22  CRC=F443B81C]
     tmp\system\son_tmp_main.h                               [31-3-26 14:02  CRC=A8D6F062]
-    tmp\system\son_tmp_config.h                             [17-4-26 13:25  CRC=E168A4BD]
+    tmp\system\son_tmp_config.h                             [18-4-26 12:52  CRC=B2D3D958]
     ..\..\..\..\..\..\..\Program Files (x86)\PICC\devices\18F67J94.h [13-5-21 13:54  CRC=CB5C8DE4]
     tmp\hardware\mcu\timer.h                                [02-3-26 17:52  CRC=861F8EE4]
     ..\..\..\..\..\..\..\Program Files (x86)\PICC\drivers\stdint.h [13-5-20 09:33  CRC=4FD89CC0]
@@ -839,9 +839,9 @@ Project Files:
     tmp\application\mission\son_tmp_mode_mission.c          [17-4-26 13:26  CRC=7CE07AC6]
     tmp\application\mission\son_tmp_mode_flash.c            [13-4-26 13:22  CRC=5C8A71F4]
 
-Source signature=017FEB53
+Source signature=D2EB1FEE
 Program memory checksum=0000
-Hex file CRC=1494
+Hex file CRC=DBBE
 
 Units:
     c:\Users\rice_\Chiba Institute of Technology\6号機 - ドキュメント\TMP_MIS\02_Software\SON_SW_044_TMP_PIC\son_tmp_main (main)
@@ -849,7 +849,7 @@ Units:
 Compiler Settings:
     Processor:      PIC18F67J94
     Pointer Size:   16
-    ADC Range:      0-255
+    ADC Range:      0-4095
     Opt Level:      0
     Short,Int,Long: UNSIGNED: 1,8,16
     Float,Double:   32,32
